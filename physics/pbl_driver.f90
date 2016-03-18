@@ -43,8 +43,13 @@ contains
     subroutine pbl_init(domain,options)
         implicit none
         type(domain_type),intent(inout)::domain
-        type(options_type),intent(in)::options
-        
+        type(options_type),intent(in)::options        
+        integer :: nx,ny,nz
+
+        nx=size(domain%p,1)
+        nz=size(domain%p,2)
+        ny=size(domain%p,3)
+   
         ime=size(domain%p,1)
         kme=size(domain%p,2)
         jme=size(domain%p,3)
@@ -110,6 +115,8 @@ contains
         type(domain_type),intent(inout)::domain
         type(options_type),intent(in)::options
         real,intent(in)::dt_in
+        real :: dtmin_in
+        dtmin_in = dt_in/60.0
         
         if (options%physics%boundarylayer==kPBL_SIMPLE) then
             call simple_pbl(domain,dt_in)
