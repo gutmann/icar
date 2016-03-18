@@ -137,6 +137,7 @@ module data_structures
     real, parameter :: pi  = 3.1415927 ! pi
     real, parameter :: stefan_boltzmann = 5.67e-8 ! the Stefan-Boltzmann constant
     real, parameter :: karman = 0.41   ! the von Karman constant
+    real, parameter :: cs = 0.01 ! 0.01 over land z0 over water, added by Patrik Bohlinger for calculating exch_q
     
     ! convenience parameters for various physics packages
     real, parameter :: rovcp = Rd/cp
@@ -159,6 +160,17 @@ module data_structures
     
     real, parameter ::  EP1  = Rw/Rd-1.
     real, parameter ::  EP2  = Rd/Rw
+
+    ! coriolis parameter f
+    real, parameter ::  eomeg = 9.37e-5
+    ! p_top
+    real ::  p_top = 10000
+    ! critical bulk-richardson #
+    real, parameter ::  Rib_cr = 0.5 ! in Hong et al. 2006 they say 0.5 but why not 0.25?
+    ! proportionality factor
+    real, parameter :: propfact = 7.8 ! in Hong et al. 2006 this value is suggested
+    ! counter
+    integer :: counter = 1
     
 ! ------------------------------------------------
 !   various data structures for use in geographic interpolation routines
@@ -315,6 +327,34 @@ module data_structures
         real, allocatable, dimension(:,:)   :: u10, v10             ! 10m height u and v winds                      [m/s]
         real, allocatable, dimension(:,:)   :: t2m, q2m             ! 2m height air temperature                     [K] 
                                                                     ! and water vapor mixing ratio                  [kg/kg]
+
+        ! Newly added by Patrik
+        real, allocatable, dimension(:,:)   :: wspd                 ! windspeed of lowest level                     [m/s]
+        real, allocatable, dimension(:,:,:)   :: wspd3d             ! windspeed of lowest level                     [m/s]
+        real, allocatable, dimension(:,:)   :: z_agl                ! z above ground                                [m]
+        real, allocatable, dimension(:,:)   :: thstar               ! temperature scale                             [K]
+        !real, allocatable, dimension(:,:)   :: l                   ! Monin-Obukhov length                          [m]
+        real, allocatable, dimension(:,:)   :: zol                  ! Monin-Obukhov stability parameter z/l         [dimensionless]
+        real, allocatable, dimension(:,:)   :: hol                  ! pbl height over Monin-Obukhov length
+        real, allocatable, dimension(:,:)   :: Rib                  ! Bulk-Richardson number
+        real, allocatable, dimension(:,:)   :: PBLh                 ! pbl height used psi
+        real, allocatable, dimension(:,:)   :: psim                 ! integrated similarity functions for momentum
+        real, allocatable, dimension(:,:)   :: psih                 ! integrated similarity functions for heat
+        real, allocatable, dimension(:,:)   :: psix                 ! x needed to compute psi functions for convective conditions
+        real, allocatable, dimension(:,:)   :: ustar_new            ! ustar calculated using psi, uscale
+        real, allocatable, dimension(:,:)   :: wstar_new            ! wstar calculated using psi, wscale
+        real, allocatable, dimension(:,:)   :: gz1oz0               ! 
+        real, allocatable, dimension(:,:)   :: thv                  ! thv virtual th in lowest level
+        real, allocatable, dimension(:,:,:)   :: thv3d              ! thv virtual th on full 3d field
+        real, allocatable, dimension(:,:)   :: thvg                 ! virtual th at ground level
+        real, allocatable, dimension(:,:)   :: thg                  ! th at ground level
+        real, allocatable, dimension(:,:)   :: exch_m               ! exchange coefficient for momentum
+        real, allocatable, dimension(:,:)   :: exch_h               ! exchange coefficient for heat
+        real, allocatable, dimension(:,:)   :: exch_q               ! exchange coefficient for moisture
+        integer, allocatable, dimension(:,:)   :: kpbl2d            ! Not clear yet what this does
+        real :: dtmin                                               ! dt in minutes
+        !real :: regime                                             ! stability
+        !regime
         
         ! current model time step length (should this be somewhere else?)
         real::dt
