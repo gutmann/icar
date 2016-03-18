@@ -172,7 +172,7 @@ contains
         
         ! ----- start surface layer calculations usually done by surface layer scheme ----- !
         if (options%physics%boundarylayer==kPBL_SIMPLE) then
-            write(*,*) "calculate surface layer based on log wind profile"
+            !write(*,*) "calculate surface layer based on log wind profile"
             ! temporary constant
             ! use log-law of the wall to convert from first model level to surface
             currw = karman / log((domain%z(2:nx-1,1,2:ny-1)-domain%terrain(2:nx-1,2:ny-1)) / domain%znt(2:nx-1,2:ny-1))
@@ -188,7 +188,7 @@ contains
 
         elseif (options%physics%boundarylayer==kPBL_YSU) then
             ! start surface layer calculations introduced by Patrik Bohlinger
-            write(*,*) "calculate surface layer based on monin-obukhov similarity theory"
+            !write(*,*) "calculate surface layer based on monin-obukhov similarity theory"
             ! ----- start temporary solution ----- !
             ! use log-law of the wall to convert from first model level to surface
             currw = karman / log((domain%z(2:nx-1,1,2:ny-1)-domain%terrain(2:nx-1,2:ny-1)) / domain%znt(2:nx-1,2:ny-1))
