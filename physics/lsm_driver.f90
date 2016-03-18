@@ -343,7 +343,11 @@ contains
         
         write(*,*) "Initializing LSM"
         
-        exchange_term = 1
+        if (options%physics%boundarylayer==kPBL_YSU) then
+                exchange_term = 1 ! should be changed to "3", added method 3 for nonlocal similarity theory based calculations for the exchange coefficients
+        else
+                exchange_term = 1
+        endif
         
         ime=size(domain%th,1)
         jme=size(domain%th,3)
