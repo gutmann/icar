@@ -44,29 +44,29 @@ contains
         implicit none
         type(domain_type),intent(inout)::domain
         type(options_type),intent(in)::options        
-        !integer :: nx,ny,nz
+        integer :: nx,ny,nz
 
-        !nx=size(domain%p,1)
-        !nz=size(domain%p,2)
-        !ny=size(domain%p,3)
+        nx=size(domain%p,1)
+        nz=size(domain%p,2)
+        ny=size(domain%p,3)
    
         ime=size(domain%p,1)
         kme=size(domain%p,2)
         jme=size(domain%p,3)
         ims=1; jms=1; kms=1
 
-        !if (options%physics%boundarylayer==kPBL_YSU) then
-        !    ids=ims; its=ims-1; ide=ime; ite=ime-1
-        !    kds=kms; kts=kms; kde=kme-1; kte=kme-1
-        !    jds=jms; jts=jms-1; jde=jme; jte=jme-1
-        !else
-        !    ids=ims; its=ims; ide=ime; ite=ime
-        !    kds=kms; kts=kms; kde=kme; kte=kme
-        !    jds=jms; jts=jms; jde=jme; jte=jme
-        !endif
-        ids=ims; its=ims; ide=ime; ite=ime
-        kds=kms; kts=kms; kde=kme; kte=kme
-        jds=jms; jts=jms; jde=jme; jte=jme
+        if (options%physics%boundarylayer==kPBL_YSU) then
+            ids=ims; its=ims-1; ide=ime; ite=ime-1
+            kds=kms; kts=kms; kde=kme-1; kte=kme-1
+            jds=jms; jts=jms-1; jde=jme; jte=jme-1
+        else
+            ids=ims; its=ims; ide=ime; ite=ime
+            kds=kms; kts=kms; kde=kme; kte=kme
+            jds=jms; jts=jms; jde=jme; jte=jme
+        endif
+        !ids=ims; its=ims; ide=ime; ite=ime
+        !kds=kms; kts=kms; kde=kme; kte=kme
+        !jds=jms; jts=jms; jde=jme; jte=jme
         
         allowed_to_read=.True.
         restart=.False.
@@ -99,7 +99,7 @@ contains
             ! YSU-scheme
             !domain%thvg(2:nx-1,2:ny-1) = domain%thv(2:nx-1,2:ny-1) !for init thvg=thv since thT = 0, t2m should rather be used than skin_t, b=proportionality factor=7.8, Hong et al. 2006 only used for next time steps
             !domain%PBLh(2:nx-1,2:ny-1) = 0.0
-            !domain%PBLh(2:nx-1,2:ny-1) = Rib_cr * domain%thv(2:nx-1,2:ny-1)*domain%wspd3d(2:nx-1,8,2:ny-1)**2 / gravity * (domain%thv3d(2:nx-1,8,2:ny-1)-domain%thvg(2:nx-1,2:ny-1)) 
+            domain%PBLh(2:nx-1,2:ny-1) = Rib_cr * domain%thv(2:nx-1,2:ny-1)*domain%wspd3d(2:nx-1,8,2:ny-1)**2 / gravity * (domain%thv3d(2:nx-1,8,2:ny-1)-domain%thvg(2:nx-1,2:ny-1)) 
             !U^2 and thv are from height PBLh in equation. Arbitrary height is used in order to be able to use the initialization based on the similarity theory
             ! ----- end surface layer variable initialization ----- !
         endif
@@ -110,15 +110,15 @@ contains
         type(domain_type),intent(inout)::domain
         type(options_type),intent(in)::options
         real,intent(in)::dt_in
-        !real :: dtmin_in
-        !dtmin_in = dt_in/60.0
+        real :: dtmin_in
+        dtmin_in = dt_in/60.0
         
         if (options%physics%boundarylayer==kPBL_SIMPLE) then
             call simple_pbl(domain,dt_in)
         endif
         
         if (options%physics%boundarylayer==kPBL_YSU) then
-            stop( "YSU PBL not implemented yet")
+!            stop( "YSU PBL not implemented yet")
 !             call ysu(domain%Um, domain%Vm,   domain%th, domain%t,               &
 !                      domain%qv, domain%cloud,domain%ice,                        &
 !                      domain%p,domain%p_inter,domain%pii,                        &
@@ -173,28 +173,28 @@ contains
             !write(*,*) "domain%z: ", MAXVAL(domain%z),MINVAL(domain%z)
             !write(*,*) "domain%z_agl: ",
             !MAXVAL(domain%z_agl),MINVAL(domain%z_agl)
-            !write(*,*) "--- Start YSU-scheme ---"a
+            write(*,*) "--- Start YSU-scheme ---"
 
-            !call ysu(domain%Um, domain%Vm, domain%th, domain%t,                                                     &
-            !         domain%qv, domain%cloud, domain%ice,                                                           &
-            !         domain%p, domain%p_inter, domain%pii,                                                          &
-            !         domain%tend%u, domain%tend%v, domain%tend%th,                                                  &
-            !         domain%tend%qv_pbl, domain%tend%qc, domain%tend%qi,flag_qi,                                    &
-            !         cp, gravity, rovcp, Rd, rovg,                                                                  &
-            !         domain%dz_inter, domain%z_agl, LH_vaporization, Rw,domain%psfc,                                &
-            !         domain%ZNU, domain%ZNW, domain%mut, p_top,                                                     &
-            !         domain%znt, domain%ustar_new, domain%zol, domain%hol,domain%PBLh, domain%psim, domain%psih,    &
-            !         domain%landmask, domain%sensible_heat, domain%latent_heat,                                     &
-            !         domain%skin_t, domain%gz1oz0, domain%wspd, domain%Rib,                                         &
-            !         dt_in, dtmin_in, domain%kpbl2d,                                                                &
-            !         SVP1, SVP2, SVP3, SVPT0, EP1, EP2, karman, eomeg,stefan_boltzmann,                             &
-            !         domain%exch_h,                                                                                 &
-            !         domain%u10, domain%v10,                                                                        &
-            !         ids,ide, jds,jde, kds,kde,                                                                     &
-            !         ims,ime, jms,jme, kms,kme,                                                                     &
-            !         its,ite, jts,jte, kts,kte)
+            call ysu(domain%Um, domain%Vm, domain%th, domain%t,                                                     &
+                     domain%qv, domain%cloud, domain%ice,                                                           &
+                     domain%p, domain%p_inter, domain%pii,                                                          &
+                     domain%tend%u, domain%tend%v, domain%tend%th,                                                  &
+                     domain%tend%qv_pbl, domain%tend%qc, domain%tend%qi,flag_qi,                                    &
+                     cp, gravity, rovcp, Rd, rovg,                                                                  &
+                     domain%dz_inter, domain%z_agl, LH_vaporization, Rw,domain%psfc,                                &
+                     domain%ZNU, domain%ZNW, domain%mut, p_top,                                                     &
+                     domain%znt, domain%ustar_new, domain%zol, domain%hol,domain%PBLh, domain%psim, domain%psih,    &
+                     domain%landmask, domain%sensible_heat, domain%latent_heat,                                     &
+                     domain%skin_t, domain%gz1oz0, domain%wspd, domain%Rib,                                         &
+                     dt_in, dtmin_in, domain%kpbl2d,                                                                &
+                     SVP1, SVP2, SVP3, SVPT0, EP1, EP2, karman, eomeg,stefan_boltzmann,                             &
+                     domain%exch_h,                                                                                 &
+                     domain%u10, domain%v10,                                                                        &
+                     ids,ide, jds,jde, kds,kde,                                                                     &
+                     ims,ime, jms,jme, kms,kme,                                                                     &
+                     its,ite, jts,jte, kts,kte)
 
-            !write(*,*) "--- End YSU-scheme ---"
+            write(*,*) "--- End YSU-scheme ---"
             !write(*,*) "domain%t(45,10,2): ", domain%t(45,10,2)
             !write(*,*) "domain%t: ", MAXVAL(domain%t), MINVAL(domain%t)
             !write(*,*) "domain%th: ", MAXVAL(domain%th), MINVAL(domain%th)
