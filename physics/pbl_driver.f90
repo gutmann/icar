@@ -56,9 +56,9 @@ contains
         ims=1; jms=1; kms=1
 
         if (options%physics%boundarylayer==kPBL_YSU) then
-            ids=ims; its=ims-1; ide=ime; ite=ime-1
-            kds=kms; kts=kms; kde=kme-1; kte=kme-1
-            jds=jms; jts=jms-1; jde=jme; jte=jme-1
+            ids=ims; its=ims+1; ide=ime; ite=ime-1
+            kds=kms; kts=kms; kde=kme; kte=kme-1
+            jds=jms; jts=jms+1; jde=jme; jte=jme-1
         else
             ids=ims; its=ims; ide=ime; ite=ime
             kds=kms; kts=kms; kde=kme; kte=kme
