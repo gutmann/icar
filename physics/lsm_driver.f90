@@ -146,6 +146,29 @@ contains
         where(exchange_C < MIN_EXCHANGE_C) exchange_C=MIN_EXCHANGE_C
     end subroutine calc_exchange_coefficient
 
+!----- start new surface layer calculations introduced by Patrik Bohlinger -----!
+    !subroutine calc_MO_sflayer_exch_coeff()
+    !    implicit none
+        
+        ! compute the dimensionless bulk coefficent for 
+        ! momentum, heat and moisture
+    !    domain%exch_m(2:nx-1,2:ny-1) = (karman**2) / (log(domain%z_agl(2:nx-1,2:ny-1) / domain%znt(2:nx-1,2:ny-1)) & 
+    !                                    - domain%psim(2:nx-1,2:ny-1))**2
+    !    domain%exch_h(2:nx-1,2:ny-1) = (karman**2) / ((log(domain%z_agl(2:nx-1,2:ny-1) / domain%znt(2:nx-1,2:ny-1)) &
+    !                                    - domain%psim(2:nx-1,2:ny-1)) * (log(domain%z_agl(2:nx-1,2:ny-1)&
+    !                                    / domain%znt(2:nx-1,2:ny-1)) - domain%psih(2:nx-1,2:ny-1)))
+    !    domain%exch_q(2:nx-1,2:ny-1) = (karman**2) / ((log(domain%z_agl(2:nx-1,2:ny-1) / domain%znt(2:nx-1,2:ny-1)) &
+    !                                    - domain%psim(2:nx-1,2:ny-1)) &
+    !                                    * (log(domain%rho(2:nx-1,1,2:ny-1) * cp * karman * domain%ustar_new(2:nx-1,2:ny-1)&
+    !                                    * domain%z_agl(2:nx-1,2:ny-1) / cs) - psih(2:nx-1,2:ny-1)))
+    !end subroutine
+
+    !subroutine calc_revised_MO_sflayer_exch_coeff()
+    !    implicit none
+    !end subroutine
+
+!----- end new surface layer calculations introduced by Patrik Bohlinger -----!
+
 
 ! eqn A11 in Appendix A.2 of Chen et al 1997 (see below for reference)
     subroutine F2_formula(F2, z_atm, zo, Ri)
