@@ -185,7 +185,11 @@ contains
         
             ! now calculate master ustar based on U and V combined in quadrature
             domain%ustar(2:nx-1,2:ny-1) = sqrt(domain%Um(2:nx-1,1,2:ny-1)**2 + domain%Vm(2:nx-1,1,2:ny-1)**2) * currw
-
+            ! counter is just a variable helping me to detect how much rounds
+            ! this subroutine went through
+            !write(*,*) "Counter: ", counter
+            counter = counter + 1
+            !write(*,*) "Counter: ", counter
         elseif (options%physics%boundarylayer==kPBL_YSU) then
             ! start surface layer calculations introduced by Patrik Bohlinger
             !write(*,*) "calculate surface layer based on monin-obukhov similarity theory"
@@ -218,8 +222,10 @@ contains
 
             ! find value of pbl heights for wspd3d
             !domain%PBLh(2:nx-1,2:ny-1) = Rib_cr * domain%thv(2:nx-1,2:ny-1) * domain%wspd(2:nx-1,2:ny-1)**2 / gravity * (domain%thv(2:nx-1,2:ny-1) - domain%thvg(2:nx-1,2:ny-1)) !U^2 and thv are from height PBLh in equation
-            write(*,*) "max min domain%pbl_height: ", maxval(domain%pbl_height), minval(domain%pbl_height)
-            write(*,*) "max min domain%PBLh: ", maxval(domain%PBLh), minval(domain%PBLh) ! introduced the PBLh variabel to not overwrite pbl_height and compare new with old calculations as the pbl height is one of the most crucial factors of the non-local surface layer calculations needed by the YSU-scheme
+
+            !write(*,*) "max min domain%pbl_height: ", maxval(domain%pbl_height), minval(domain%pbl_height)
+            !write(*,*) "max min domain%PBLh: ", maxval(domain%PBLh), minval(domain%PBLh) ! introduced the PBLh variabel to not overwrite pbl_height and compare new with old calculations as the pbl height is one of the most crucial factors of the non-local surface layer calculations needed by the YSU-scheme
+
             ! To prevent Rib from becoming too high a lower limit of 0.1 is
             ! applied Jiminez et al 2012
             where(domain%wspd(2:nx-1,2:ny-1) < 0.1)
@@ -273,9 +279,9 @@ contains
             !domain%exch_q(2:nx-1,2:ny-1) = (karman**2)/((log(domain%z_agl(2:nx-1,2:ny-1)/domain%znt(2:nx-1,2:ny-1)) - domain%psim(2:nx-1,2:ny-1)) * (log(domain%rho(2:nx-1,1,2:ny-1)*cp*karman*domain%ustar_new(2:nx-1,2:ny-1)*domain%z_agl(2:nx-1,2:ny-1)/cs)-psih(2:nx-1,2:ny-1)))
 
             ! counter is just a variable helping me to detect how much rounds this subroutine went through
-            write(*,*) "Counter: ", counter
+            !write(*,*) "Counter: ", counter
             counter = counter + 1
-            write(*,*) "Counter: ", counter
+            !write(*,*) "Counter: ", counter
             ! end surface layer calculations introduced by Patrik Bohlinger
         endif        
         ! ----- end sfc layer calculations ----- !

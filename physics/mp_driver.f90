@@ -56,7 +56,7 @@ contains
         implicit none
         type(options_type), intent(in)::options
         
-        write(*,*) "Initializing Microphysics"
+        !write(*,*) "Initializing Microphysics"
         if (options%physics%microphysics==kMP_THOMPSON) then
             write(*,*) "    Thompson Microphysics"
             call thompson_init(options%mp_options)

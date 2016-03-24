@@ -142,37 +142,44 @@ contains
             !kds=kms; kts=kms; kde=kme-1; kte=kme-1
             !jds=jms; jts=jms-1; jde=jme; jte=jme-1
 
-            !write(*,*) "domain%t(45,10,2): ", domain%t(45,10,2)
             !write(*,*) "domain%t: ", MAXVAL(domain%t), MINVAL(domain%t)
+            !write(*,*) "domain%t(23,1,2): ", domain%t(23,1,2)
             !write(*,*) "domain%th: ", MAXVAL(domain%th), MINVAL(domain%th)
-            !write(*,*) "domain%th(45,10,2): ", domain%th(45,10,2)
+            !write(*,*) "domain%th(23,1,2): ", domain%th(23,1,2)
             !write(*,*) "domain%Um: ", MAXVAL(domain%Um), MINVAL(domain%Um)
+            !write(*,*) "domain%Um(23,1,2): ", domain%Um(23,1,2)
             !write(*,*) "domain%Vm: ", MAXVAL(domain%Vm), MINVAL(domain%Vm)
+            !write(*,*) "domain%Vm(23,1,2): ", domain%Vm(23,1,2)
             !write(*,*) "domain%qv: ", MAXVAL(domain%qv), MINVAL(domain%qv)
-            !write(*,*) "domain%cloud: ", MAXVAL(domain%cloud),
-            !MINVAL(domain%cloud)
+            !write(*,*) "domain%qv(23,1,2): ", domain%qv(23,1,2)
+            !write(*,*) "domain%cloud: ", MAXVAL(domain%cloud),MINVAL(domain%cloud)
+            !write(*,*) "domain%cloud(23,1,2): ", domain%cloud(23,1,2)
             !write(*,*) "domain%ice: ", MAXVAL(domain%ice), MINVAL(domain%ice)
-            !write(*,*) "domain%th: ", MAXVAL(domain%th), MINVAL(domain%th)
-            !write(*,*) "domain%psim: ", MAXVAL(domain%psim),
-            !MINVAL(domain%psim)
-            !write(*,*) "domain%psih: ", MAXVAL(domain%psih),
-            !MINVAL(domain%psih)
-            !write(*,*) "domain%PBLh: ", MAXVAL(domain%PBLh),
-            !MINVAL(domain%PBLh)
+            !write(*,*) "domain%ice(23,1,2): ", domain%ice(23,1,2)
+            !write(*,*) "domain%psim: ", MAXVAL(domain%psim),MINVAL(domain%psim)
+            !write(*,*) "domain%psim(23,2): ", domain%psim(23,2)
+            !write(*,*) "domain%psih: ", MAXVAL(domain%psih),MINVAL(domain%psih)
+            !write(*,*) "domain%psih(23,2): ", domain%psih(23,2)
+            !write(*,*) "domain%PBLh: ", MAXVAL(domain%PBLh),MINVAL(domain%PBLh)
+            !write(*,*) "domain%PBLh(23,2): ", domain%PBLh(23,2)
             !write(*,*) "domain%Rib: ", MAXVAL(domain%Rib), MINVAL(domain%Rib)
+            !write(*,*) "domain%Rib(23,2): ", domain%Rib(23,2)
             !write(*,*) "domain%hol: ", MAXVAL(domain%hol), MINVAL(domain%hol)
+            !write(*,*) "domain%hol(23,2): ", domain%hol(23,2)
             !write(*,*) "domain%zol: ", MAXVAL(domain%zol), MINVAL(domain%zol)
+            !write(*,*) "domain%zol(23,2): ", domain%zol(23,2)
             !write(*,*) "domain%znt: ", MAXVAL(domain%znt), MINVAL(domain%znt)
-            !write(*,*) "domain%ustar: ",
-            !MAXVAL(domain%ustar),MINVAL(domain%ustar)
-            !write(*,*) "domain%ustar_new: ",
-            !MAXVAL(domain%ustar_new),MINVAL(domain%ustar_new)
-            !write(*,*) "domain%ustar_new(45,10,2): ", domain%ustar_new(45,2)
-            !write(*,*) "domain%exch_h: ",
-            !MAXVAL(domain%exch_h),MINVAL(domain%exch_h)
+            !write(*,*) "domain%znt(23,2): ", domain%znt(23,2)
+            !write(*,*) "domain%ustar: ",MAXVAL(domain%ustar),MINVAL(domain%ustar)
+            !write(*,*) "domain%ustar(23,2): ", domain%ustar(23,2)
+            !write(*,*) "domain%ustar_new: ",MAXVAL(domain%ustar_new),MINVAL(domain%ustar_new)
+            !write(*,*) "domain%ustar_new(23,2): ", domain%ustar_new(23,2)
+            !write(*,*) "domain%exch_h: ",MAXVAL(domain%exch_h),MINVAL(domain%exch_h)
+            !write(*,*) "domain%exch_h(23,2): ", domain%exch_h(23,2)
             !write(*,*) "domain%z: ", MAXVAL(domain%z),MINVAL(domain%z)
-            !write(*,*) "domain%z_agl: ",
-            !MAXVAL(domain%z_agl),MINVAL(domain%z_agl)
+            !write(*,*) "domain%z(23,1,2): ", domain%z(23,1,2)
+            !write(*,*) "domain%z_agl: ",MAXVAL(domain%z_agl),MINVAL(domain%z_agl)
+            !write(*,*) "domain%z_agl(23,2): ", domain%z_agl(23,2)
             write(*,*) "--- Start YSU-scheme ---"
 
             call ysu(domain%Um, domain%Vm, domain%th, domain%t,                                                     &
@@ -195,37 +202,44 @@ contains
                      its,ite, jts,jte, kts,kte)
 
             write(*,*) "--- End YSU-scheme ---"
-            !write(*,*) "domain%t(45,10,2): ", domain%t(45,10,2)
             !write(*,*) "domain%t: ", MAXVAL(domain%t), MINVAL(domain%t)
+            !write(*,*) "domain%t(23,1,2): ", domain%t(23,1,2)
             !write(*,*) "domain%th: ", MAXVAL(domain%th), MINVAL(domain%th)
-            !write(*,*) "domain%th(45,10,2): ", domain%th(45,10,2)
+            !write(*,*) "domain%th(23,1,2): ", domain%th(23,1,2)
             !write(*,*) "domain%Um: ", MAXVAL(domain%Um), MINVAL(domain%Um)
+            !write(*,*) "domain%Um(23,1,2): ", domain%Um(23,1,2)
             !write(*,*) "domain%Vm: ", MAXVAL(domain%Vm), MINVAL(domain%Vm)
+            !write(*,*) "domain%Vm(23,1,2): ", domain%Vm(23,1,2)
             !write(*,*) "domain%qv: ", MAXVAL(domain%qv), MINVAL(domain%qv)
-            !write(*,*) "domain%cloud: ", MAXVAL(domain%cloud),
-            !MINVAL(domain%cloud)
+            !write(*,*) "domain%qv(23,1,2): ", domain%qv(23,1,2)
+            !write(*,*) "domain%cloud: ", MAXVAL(domain%cloud),MINVAL(domain%cloud)
+            !write(*,*) "domain%cloud(23,1,2): ", domain%cloud(23,1,2)
             !write(*,*) "domain%ice: ", MAXVAL(domain%ice), MINVAL(domain%ice)
-            !write(*,*) "domain%th: ", MAXVAL(domain%th), MINVAL(domain%th)
-            !write(*,*) "domain%psim: ", MAXVAL(domain%psim),
-            !MINVAL(domain%psim)
-            !write(*,*) "domain%psih: ", MAXVAL(domain%psih),
-            !MINVAL(domain%psih)
-            !write(*,*) "domain%PBLh: ", MAXVAL(domain%PBLh),
-            !MINVAL(domain%PBLh)
+            !write(*,*) "domain%ice(23,1,2): ", domain%ice(23,1,2)
+            !write(*,*) "domain%psim: ", MAXVAL(domain%psim),MINVAL(domain%psim)
+            !write(*,*) "domain%psim(23,2): ", domain%psim(23,2)
+            !write(*,*) "domain%psih: ", MAXVAL(domain%psih),MINVAL(domain%psih)
+            !write(*,*) "domain%psih(23,2): ", domain%psih(23,2)
+            !write(*,*) "domain%PBLh: ", MAXVAL(domain%PBLh),MINVAL(domain%PBLh)
+            !write(*,*) "domain%PBLh(23,2): ", domain%PBLh(23,2)
             !write(*,*) "domain%Rib: ", MAXVAL(domain%Rib), MINVAL(domain%Rib)
+            !write(*,*) "domain%Rib(23,2): ", domain%Rib(23,2)
             !write(*,*) "domain%hol: ", MAXVAL(domain%hol), MINVAL(domain%hol)
+            !write(*,*) "domain%hol(23,2): ", domain%hol(23,2)
             !write(*,*) "domain%zol: ", MAXVAL(domain%zol), MINVAL(domain%zol)
+            !write(*,*) "domain%zol(23,2): ", domain%zol(23,2)
             !write(*,*) "domain%znt: ", MAXVAL(domain%znt), MINVAL(domain%znt)
-            !write(*,*) "domain%ustar: ", MAXVAL(domain%ustar),
-            !MINVAL(domain%ustar)
-            !write(*,*) "domain%ustar_new: ",
-            !MAXVAL(domain%ustar_new),MINVAL(domain%ustar_new)
-            !write(*,*) "domain%ustar_new(45,10,2): ", domain%ustar_new(45,2)
-            !write(*,*) "domain%exch_h: ",
-            !MAXVAL(domain%exch_h),MINVAL(domain%exch_h)
+            !write(*,*) "domain%znt(23,2): ", domain%znt(23,2)
+            !write(*,*) "domain%ustar: ",MAXVAL(domain%ustar),MINVAL(domain%ustar)
+            !write(*,*) "domain%ustar(23,2): ", domain%ustar(23,2)
+            !write(*,*) "domain%ustar_new: ",MAXVAL(domain%ustar_new),MINVAL(domain%ustar_new)
+            !write(*,*) "domain%ustar_new(23,2): ", domain%ustar_new(23,2)
+            !write(*,*) "domain%exch_h: ",MAXVAL(domain%exch_h),MINVAL(domain%exch_h)
+            !write(*,*) "domain%exch_h(23,2): ", domain%exch_h(23,2)
             !write(*,*) "domain%z: ", MAXVAL(domain%z),MINVAL(domain%z)
-            !write(*,*) "domain%z_agl: ",
-            !MAXVAL(domain%z_agl),MINVAL(domain%z_agl)
+            !write(*,*) "domain%z(23,1,2): ", domain%z(23,1,2)
+            !write(*,*) "domain%z_agl: ",MAXVAL(domain%z_agl),MINVAL(domain%z_agl)
+            !write(*,*) "domain%z_agl(23,2): ", domain%z_agl(23,2)
         endif
                         
     end subroutine pbl

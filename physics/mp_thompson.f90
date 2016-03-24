@@ -894,7 +894,8 @@
             ni1d(k) = ni(i,k,j)
             nr1d(k) = nr(i,k,j)
          enddo
-
+         !write(*,*) "j: ", j
+         !write(*,*) "i: ", i
          call mp_thompson(qv1d, qc1d, qi1d, qr1d, qs1d, qg1d, ni1d, &
                       nr1d, t1d, p1d, dz1d, &
                       pptrain, pptsnow, pptgraul, pptice, &
@@ -2413,13 +2414,31 @@
 !.. Newton-Raphson iterations (3 should suffice) as provided by B. Hall.
 !+---+-----------------------------------------------------------------+
       do k = kts, kte
+         !write(*,*) "k: ", k
          if ( (ssatw(k).gt. eps) .or. (ssatw(k).lt. -eps .and. &
                    L_qc(k)) ) then
           clap = (qv(k)-qvs(k))/(1. + lvt2(k)*qvs(k))
           do n = 1, 3
+             !write(*,*) "----- start control output mp_thompson-----"
+             !write(*,*) "n: ", n
+             !write(*,*) "fcd: ", fcd
+             !write(*,*) "dfcd: ", dfcd
+             !write(*,*) "qvs(k): ", qvs(k)
+             !write(*,*) "lvt2(k): ", lvt2(k)
+             !write(*,*) "clap: ", clap
+             !write(*,*) "qv(k): ", qv(k)
              fcd = qvs(k)* EXP(lvt2(k)*clap) - qv(k) + clap
              dfcd = qvs(k)*lvt2(k)* EXP(lvt2(k)*clap) + 1.
              clap = clap - fcd/dfcd
+             !write(*,*) "----------"
+             !write(*,*) "n: ", n
+             !write(*,*) "fcd: ", fcd
+             !write(*,*) "dfcd: ", dfcd
+             !write(*,*) "qvs(k): ", qvs(k)
+             !write(*,*) "lvt2(k): ", lvt2(k)
+             !write(*,*) "clap: ", clap
+             !write(*,*) "qv(k): ", qv(k)
+             !write(*,*) "----- end control output mp_thompson-----"
           enddo
           xrc = rc(k) + clap
           if (xrc.gt. 0.0) then
