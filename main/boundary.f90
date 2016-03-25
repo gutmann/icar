@@ -31,7 +31,7 @@ module boundary_conditions
 ! ----------------------------------------------------------------------------
     use data_structures
     use io_routines,            only : io_getdims, io_read3d, io_maxDims, io_read2d, io_variable_is_present, &
-                                       io_write3di, io_write3d
+                                       io_write
     use wind,                   only : update_winds,balance_uvw
     use linear_theory_winds,    only : linear_perturb
     use geo,                    only : geo_interp2d, geo_interp
@@ -324,7 +324,6 @@ contains
             call geo_interp(inputdata, &
                             extra_data, &
                             geolut,boundary_only)
-            
             ! Then apply vertical interpolation on that grid
             if (apply_vertical_interpolation) then
                 call vinterp(highres, inputdata, &
@@ -596,10 +595,38 @@ contains
         do i=1,3
             if (size(data1,i).ne.size(data2,i)) then
                 write(*,*) "Restart file 3D dimensions don't match domain"
+                write(*,*) shape(data1)
+                write(*,*) shape(data2)
                 stop
             endif
         enddo
     end subroutine check_shapes_3d
+    
+    !>------------------------------------------------------------
+    !! Swap the last two dimensions of an array
+    !!
+    !! Call reshape after finding the nx,ny,nz values
+    !!
+    !! @param data     3D array to be reshaped
+    !!
+    !!------------------------------------------------------------
+    subroutine swap_y_z_dimensions(data)
+        implicit none
+        real,dimension(:,:,:),intent(inout),allocatable :: data
+        real,dimension(:,:,:), allocatable :: temporary_data
+        integer :: nx,ny,nz
+        
+        nx=size(data,1)
+        ny=size(data,2)
+        nz=size(data,3)
+        allocate(temporary_data(nx,nz,ny))
+        temporary_data = reshape(data, [nx,nz,ny], order=[1,3,2])
+
+        deallocate(data)
+        allocate(data(nx,nz,ny))
+        data=temporary_data
+        
+    end subroutine swap_y_z_dimensions
     
     !>------------------------------------------------------------
     !!  Load restart file
@@ -629,43 +656,56 @@ contains
         write(*,*) "Reading atmospheric restart data"
         write(*,*) "   timestep:",trim(str(timeslice))," from file:",trim(restart_file)
         call io_read3d(restart_file,"qv",inputdata,timeslice)
+        call swap_y_z_dimensions(inputdata)
         call check_shapes_3d(inputdata,domain%qv)
         domain%qv=inputdata
         deallocate(inputdata)
+        
         call io_read3d(restart_file,"qc",inputdata,timeslice)
+        call swap_y_z_dimensions(inputdata)
         domain%cloud=inputdata
         deallocate(inputdata)
+
         call io_read3d(restart_file,"qr",inputdata,timeslice)
+        call swap_y_z_dimensions(inputdata)
         domain%qrain=inputdata
         deallocate(inputdata)
         call io_read3d(restart_file,"qi",inputdata,timeslice)
+        call swap_y_z_dimensions(inputdata)
         domain%ice=inputdata
         deallocate(inputdata)
         call io_read3d(restart_file,"qs",inputdata,timeslice)
+        call swap_y_z_dimensions(inputdata)
         domain%qsnow=inputdata
         deallocate(inputdata)
         if (io_variable_is_present(restart_file,"qg")) then
             call io_read3d(restart_file,"qg",inputdata,timeslice)
+            call swap_y_z_dimensions(inputdata)
             domain%qgrau=inputdata
             deallocate(inputdata)
         endif
         if (io_variable_is_present(restart_file,"nr")) then
             call io_read3d(restart_file,"nr",inputdata,timeslice)
+            call swap_y_z_dimensions(inputdata)
             domain%nrain=inputdata
             deallocate(inputdata)
         endif
         if (io_variable_is_present(restart_file,"ni")) then
             call io_read3d(restart_file,"ni",inputdata,timeslice)
+            call swap_y_z_dimensions(inputdata)
             domain%nice=inputdata
             deallocate(inputdata)
         endif
         call io_read3d(restart_file,"p",inputdata,timeslice)
+        call swap_y_z_dimensions(inputdata)
         domain%p=inputdata
         deallocate(inputdata)
         call io_read3d(restart_file,"th",inputdata,timeslice)
+        call swap_y_z_dimensions(inputdata)
         domain%th=inputdata
         deallocate(inputdata)
         call io_read3d(restart_file,"rho",inputdata,timeslice)
+        call swap_y_z_dimensions(inputdata)
         domain%rho=inputdata
         deallocate(inputdata)
         
@@ -678,6 +718,11 @@ contains
         if (io_variable_is_present(restart_file,"graupel")) then
             call io_read2d(restart_file,"graupel",inputdata_2d,timeslice)
             domain%graupel=inputdata_2d
+            deallocate(inputdata_2d)
+        endif
+        if (io_variable_is_present(restart_file,"crain")) then
+            call io_read2d(restart_file,"crain",inputdata_2d,timeslice)
+            domain%crain=inputdata_2d
             deallocate(inputdata_2d)
         endif
         
@@ -874,7 +919,7 @@ contains
             endif
             call read_var(domain%p,    file_list(curfile),   options%pvar,   &
                             bc%geolut, bc%vert_lut, curstep, boundary_value, &
-                            options,   bc%lowres_z,domain%z)
+                            options,   bc%lowres_z,domain%z, interp_vertical=.True.)
             call read_var(domain%th,   file_list(curfile),   options%tvar,   &
                             bc%geolut, bc%vert_lut, curstep, boundary_value, &
                             options)
@@ -1113,8 +1158,8 @@ contains
             !$omp do 
             do j=1,ny
                 do i=1,nz
-                    slp = pressure(:,i,j) / (1 - 2.25577E-5 * z_lo(:,i,j))**5.25588
-                    pressure(:,i,j) = slp * (1 - 2.25577e-5 * z_hi(:,i,j))**5.25588
+                    ! slp = pressure(:,i,j) / (1 - 2.25577E-5 * z_lo(:,i,j))**5.25588
+                    pressure(:,i,j) = pressure(:,i,j) * (1 - 2.25577e-5 * (z_hi(:,i,j)-z_lo(:,i,j)))**5.25588
                 enddo
             enddo
             !$omp end do
@@ -1235,7 +1280,7 @@ contains
             where(newbc%vert_lut%z==nz) newbc%vert_lut%z=nz-1
             nz=size(newbc%z,3)
             ! generate a new high-res z dataset as well (for pressure interpolations)
-            call geo_interp(bc%lowres_z, reshape(newbc%z,[nx,nz,ny],order=[1,3,2]), bc%geolut,use_interior)
+            ! call geo_interp(bc%lowres_z, reshape(newbc%z,[nx,nz,ny],order=[1,3,2]), bc%geolut,use_interior)
             
         endif
         
@@ -1266,20 +1311,20 @@ contains
         ! for pressure do not apply vertical interpolation on IO, we will adjust it more accurately
         call read_var(bc%next_domain%p,       file_list(curfile), options%pvar,   &
                       bc%geolut, bc%vert_lut, curstep, use_interior,              &
-                      options, time_varying_zlut=newbc%vert_lut, interp_vertical=.False.)
+                      options, time_varying_zlut=newbc%vert_lut, interp_vertical=.True.)
         ! for pressure adjustment, we need temperature on the original model grid, 
         ! so read it without vertical interpolation (and for interior points too)
         call read_var(bc%next_domain%th,      file_list(curfile), options%tvar,   &
                       bc%geolut, bc%vert_lut, curstep, use_interior,              &
-                      options, time_varying_zlut=newbc%vert_lut, interp_vertical=.False. )
+                      options, time_varying_zlut=newbc%vert_lut, interp_vertical=.True. )
         ! for pressure update we need real temperature, not potential t to compute an exner function
-        bc%next_domain%pii=(bc%next_domain%p/100000.0)**(Rd/cp)
+        ! bc%next_domain%pii=(bc%next_domain%p/100000.0)**(Rd/cp)
         ! now update pressure using the high res T field
-        call update_pressure(bc%next_domain%p,bc%lowres_z,domain%z,  & 
-                             lowresT = bc%next_domain%th * bc%next_domain%pii, &
-                             hiresT  = domain%th * domain%pii)
+        call update_pressure(bc%next_domain%p,bc%lowres_z,domain%z)!,  & 
+                            !  lowresT = bc%next_domain%th * bc%next_domain%pii, &
+                            !  hiresT  = domain%th * domain%pii)
         
-                      
+        ! not necessary as long as we are interpolating above
         call read_var(bc%next_domain%th,      file_list(curfile), options%tvar,   &
                       bc%geolut, bc%vert_lut, curstep, use_boundary,              &
                       options, time_varying_zlut=newbc%vert_lut)
