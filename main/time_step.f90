@@ -187,9 +187,9 @@ contains
             domain%ustar(2:nx-1,2:ny-1) = sqrt(domain%Um(2:nx-1,1,2:ny-1)**2 + domain%Vm(2:nx-1,1,2:ny-1)**2) * currw
             ! counter is just a variable helping me to detect how much rounds
             ! this subroutine went through
-            !write(*,*) "Counter: ", counter
+            write(*,*) "Counter: ", counter
             counter = counter + 1
-            !write(*,*) "Counter: ", counter
+            write(*,*) "Counter: ", counter
         elseif (options%physics%boundarylayer==kPBL_YSU) then
             ! start surface layer calculations introduced by Patrik Bohlinger
             !write(*,*) "calculate surface layer based on monin-obukhov similarity theory"
@@ -279,9 +279,9 @@ contains
             !domain%exch_q(2:nx-1,2:ny-1) = (karman**2)/((log(domain%z_agl(2:nx-1,2:ny-1)/domain%znt(2:nx-1,2:ny-1)) - domain%psim(2:nx-1,2:ny-1)) * (log(domain%rho(2:nx-1,1,2:ny-1)*cp*karman*domain%ustar_new(2:nx-1,2:ny-1)*domain%z_agl(2:nx-1,2:ny-1)/cs)-psih(2:nx-1,2:ny-1)))
 
             ! counter is just a variable helping me to detect how much rounds this subroutine went through
-            !write(*,*) "Counter: ", counter
+            write(*,*) "Counter: ", counter
             counter = counter + 1
-            !write(*,*) "Counter: ", counter
+            write(*,*) "Counter: ", counter
             ! end surface layer calculations introduced by Patrik Bohlinger
         endif        
         ! ----- end sfc layer calculations ----- !

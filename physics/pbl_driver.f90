@@ -180,7 +180,7 @@ contains
             !write(*,*) "domain%z(23,1,2): ", domain%z(23,1,2)
             !write(*,*) "domain%z_agl: ",MAXVAL(domain%z_agl),MINVAL(domain%z_agl)
             !write(*,*) "domain%z_agl(23,2): ", domain%z_agl(23,2)
-            !write(*,*) "--- Start YSU-scheme ---"
+            write(*,*) "--- Start YSU-scheme ---"
 
             call ysu(domain%Um, domain%Vm, domain%th, domain%t,                                                     &
                      domain%qv, domain%cloud, domain%ice,                                                           &
@@ -201,7 +201,9 @@ contains
                      ims,ime, jms,jme, kms,kme,                                                                     &
                      its,ite, jts,jte, kts,kte)
 
-            !write(*,*) "--- End YSU-scheme ---"
+            !call io_write("pbl_qv_tendency.nc","data",domain%tend%qv_pbl)
+
+            write(*,*) "--- End YSU-scheme ---"
             !write(*,*) "domain%t: ", MAXVAL(domain%t), MINVAL(domain%t)
             !write(*,*) "domain%t(23,1,2): ", domain%t(23,1,2)
             !write(*,*) "domain%th: ", MAXVAL(domain%th), MINVAL(domain%th)

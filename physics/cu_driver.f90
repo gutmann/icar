@@ -149,7 +149,26 @@ subroutine convect(domain,options,dt_in)
     
     if (options%physics%convection==kCU_TIEDTKE) then
 
-
+        write(*,*) "Befor call cu_tiedtke"
+        write(*,*) "domain%t: ", MAXVAL(domain%t), MINVAL(domain%t)
+                write(*,*) "domain%th: ", MAXVAL(domain%th), MINVAL(domain%th)
+                write(*,*) "domain%Um: ", MAXVAL(domain%Um), MINVAL(domain%Um)
+                write(*,*) "domain%Vm: ", MAXVAL(domain%Vm), MINVAL(domain%Vm)
+                write(*,*) "domain%qv: ", MAXVAL(domain%qv), MINVAL(domain%qv)
+                write(*,*) "domain%cloud: ",MAXVAL(domain%cloud),MINVAL(domain%cloud)
+                write(*,*) "domain%ice: ", MAXVAL(domain%ice),MINVAL(domain%ice)
+                write(*,*) "domain%psim: ",MAXVAL(domain%psim),MINVAL(domain%psim)
+                write(*,*) "domain%psih: ",MAXVAL(domain%psih),MINVAL(domain%psih)
+                write(*,*) "domain%PBLh: ",MAXVAL(domain%PBLh),MINVAL(domain%PBLh)
+                write(*,*) "domain%Rib: ", MAXVAL(domain%Rib),MINVAL(domain%Rib)
+                write(*,*) "domain%hol: ", MAXVAL(domain%hol),MINVAL(domain%hol)
+                write(*,*) "domain%zol: ", MAXVAL(domain%zol),MINVAL(domain%zol)
+                write(*,*) "domain%znt: ", MAXVAL(domain%znt),MINVAL(domain%znt)
+                write(*,*) "domain%ustar: ",MAXVAL(domain%ustar),MINVAL(domain%ustar)
+                write(*,*) "domain%ustar_new: ",MAXVAL(domain%ustar_new),MINVAL(domain%ustar_new)
+                write(*,*) "domain%exch_h: ",MAXVAL(domain%exch_h),MINVAL(domain%exch_h)
+                write(*,*) "domain%z: ", MAXVAL(domain%z),MINVAL(domain%z)
+                write(*,*) "domain%z_agl: ",MAXVAL(domain%z_agl),MINVAL(domain%z_agl)
         call CU_TIEDTKE(                                          &
                  dt_in,itimestep,STEPCU                           &
                 ,RAINCV,PRATEC,domain%latent_heat/LH_vaporization &
@@ -166,6 +185,26 @@ subroutine convect(domain,options,dt_in)
                 ,domain%tend%qi, domain%tend%u,  domain%tend%v    &
                 ,.True.,.True.,.True.,.True.,.True.               &
                 )
+                write(*,*) "After call cu_tiedtke"
+                write(*,*) "domain%t: ", MAXVAL(domain%t), MINVAL(domain%t)
+                write(*,*) "domain%th: ", MAXVAL(domain%th), MINVAL(domain%th)
+                write(*,*) "domain%Um: ", MAXVAL(domain%Um), MINVAL(domain%Um)
+                write(*,*) "domain%Vm: ", MAXVAL(domain%Vm), MINVAL(domain%Vm)
+                write(*,*) "domain%qv: ", MAXVAL(domain%qv), MINVAL(domain%qv)
+                write(*,*) "domain%cloud: ",MAXVAL(domain%cloud),MINVAL(domain%cloud)
+                write(*,*) "domain%ice: ", MAXVAL(domain%ice),MINVAL(domain%ice)
+                write(*,*) "domain%psim: ",MAXVAL(domain%psim),MINVAL(domain%psim)
+                write(*,*) "domain%psih: ",MAXVAL(domain%psih),MINVAL(domain%psih)
+                write(*,*) "domain%PBLh: ",MAXVAL(domain%PBLh),MINVAL(domain%PBLh)
+                write(*,*) "domain%Rib: ", MAXVAL(domain%Rib),MINVAL(domain%Rib)
+                write(*,*) "domain%hol: ", MAXVAL(domain%hol),MINVAL(domain%hol)
+                write(*,*) "domain%zol: ", MAXVAL(domain%zol),MINVAL(domain%zol)
+                write(*,*) "domain%znt: ", MAXVAL(domain%znt),MINVAL(domain%znt)
+                write(*,*) "domain%ustar: ",MAXVAL(domain%ustar),MINVAL(domain%ustar)
+                write(*,*) "domain%ustar_new: ",MAXVAL(domain%ustar_new),MINVAL(domain%ustar_new)
+                write(*,*) "domain%exch_h: ",MAXVAL(domain%exch_h),MINVAL(domain%exch_h)
+                write(*,*) "domain%z: ", MAXVAL(domain%z),MINVAL(domain%z)                
+                write(*,*) "domain%z_agl: ",MAXVAL(domain%z_agl),MINVAL(domain%z_agl)
     
     elseif (options%physics%convection==kCU_KAINFR) then
         call KFCPS(                                          &

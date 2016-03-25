@@ -148,21 +148,24 @@ contains
     end subroutine calc_exchange_coefficient
 
 !----- start new surface layer calculations introduced by Patrik Bohlinger -----!
-    !subroutine calc_MO_sflayer_exch_coeff()
-    !    implicit none
+    subroutine calc_MO_sflayer_exch_coeff(z_agl,znt,psim,psih,ustar_new,rho,exch_m,exch_h,exch_q)
+        implicit none
+        real, dimension(:,:),intent(in) :: z_agl,znt,psim,psih,ustar_new
+        real, dimension(:,:,:),intent(in) :: rho
+        real, dimension(:,:),intent(inout) :: exch_m,exch_h,exch_q
         
         ! compute the dimensionless bulk coefficent for 
         ! momentum, heat and moisture
-    !    domain%exch_m(2:nx-1,2:ny-1) = (karman**2) / (log(domain%z_agl(2:nx-1,2:ny-1) / domain%znt(2:nx-1,2:ny-1)) & 
-    !                                    - domain%psim(2:nx-1,2:ny-1))**2
-    !    domain%exch_h(2:nx-1,2:ny-1) = (karman**2) / ((log(domain%z_agl(2:nx-1,2:ny-1) / domain%znt(2:nx-1,2:ny-1)) &
-    !                                    - domain%psim(2:nx-1,2:ny-1)) * (log(domain%z_agl(2:nx-1,2:ny-1)&
-    !                                    / domain%znt(2:nx-1,2:ny-1)) - domain%psih(2:nx-1,2:ny-1)))
-    !    domain%exch_q(2:nx-1,2:ny-1) = (karman**2) / ((log(domain%z_agl(2:nx-1,2:ny-1) / domain%znt(2:nx-1,2:ny-1)) &
-    !                                    - domain%psim(2:nx-1,2:ny-1)) &
-    !                                    * (log(domain%rho(2:nx-1,1,2:ny-1) * cp * karman * domain%ustar_new(2:nx-1,2:ny-1)&
-    !                                    * domain%z_agl(2:nx-1,2:ny-1) / cs) - psih(2:nx-1,2:ny-1)))
-    !end subroutine
+        exch_m(2:nx-1,2:ny-1) = (karman**2) / (log(z_agl(2:nx-1,2:ny-1) / znt(2:nx-1,2:ny-1)) & 
+                                        - psim(2:nx-1,2:ny-1))**2
+        exch_h(2:nx-1,2:ny-1) = (karman**2) / ((log(z_agl(2:nx-1,2:ny-1) / znt(2:nx-1,2:ny-1)) &
+                                        - psim(2:nx-1,2:ny-1)) * (log(z_agl(2:nx-1,2:ny-1)&
+                                        / znt(2:nx-1,2:ny-1)) - psih(2:nx-1,2:ny-1)))
+        exch_q(2:nx-1,2:ny-1) = (karman**2) / ((log(z_agl(2:nx-1,2:ny-1) / znt(2:nx-1,2:ny-1)) &
+                                        - psim(2:nx-1,2:ny-1)) &
+                                        * (log(rho(2:nx-1,1,2:ny-1) * cp * karman * ustar_new(2:nx-1,2:ny-1)&
+                                        * z_agl(2:nx-1,2:ny-1) / cs) - psih(2:nx-1,2:ny-1)))
+    end subroutine
 
     !subroutine calc_revised_MO_sflayer_exch_coeff()
     !    implicit none
@@ -512,6 +515,8 @@ contains
                 call calc_exchange_coefficient(windspd,domain%skin_t,domain%T,CHS)
             elseif (exchange_term==2) then
                 call calc_mahrt_holtslag_exchange_coefficient(windspd,domain%skin_t,domain%T,domain%znt,CHS)
+            elseif (exchange_term==3) then
+                call calc_MO_sflayer_exch_coeff(domain%z_agl,domain%znt,domain%psim,domain%psih,domain%ustar_new,domain%rho,domain%exch_m,domain%exch_h,domain%exch_q)
             endif
 !             print*, CHS(128,103)
             CHS2=CHS
