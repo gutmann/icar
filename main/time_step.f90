@@ -18,6 +18,7 @@ module time_step
     use planetary_boundary_layer,   only : pbl
     use radiation,                  only : rad
     use boundary_conditions,        only : update_pressure
+    use io_routines,                only : io_write
     implicit none
     private
     public :: step
@@ -125,7 +126,55 @@ contains
         ! also, convection can modify u and v so it needs to rebalanced
         call balance_uvw(domain,options)
         
+        write(*,*) "before diagnostic update in forcing_update"
+        write(*,*) "domain%t: ", MAXVAL(domain%t), MINVAL(domain%t)
+        write(*,*) "domain%th: ", MAXVAL(domain%th), MINVAL(domain%th)
+        write(*,*) "domain%Um: ", MAXVAL(domain%Um), MINVAL(domain%Um)
+        write(*,*) "domain%Vm: ", MAXVAL(domain%Vm), MINVAL(domain%Vm)
+        write(*,*) "domain%u: ", MAXVAL(domain%u), MINVAL(domain%u)
+        write(*,*) "domain%v: ", MAXVAL(domain%v), MINVAL(domain%v)
+        write(*,*) "domain%qv: ", MAXVAL(domain%qv), MINVAL(domain%qv)
+        write(*,*) "domain%cloud: ", MAXVAL(domain%cloud),MINVAL(domain%cloud)
+        write(*,*) "domain%ice: ", MAXVAL(domain%ice), MINVAL(domain%ice)
+        write(*,*) "domain%psim: ", MAXVAL(domain%psim),MINVAL(domain%psim)
+        write(*,*) "domain%psih: ", MAXVAL(domain%psih),MINVAL(domain%psih)
+        write(*,*) "domain%PBLh: ", MAXVAL(domain%PBLh),MINVAL(domain%PBLh)
+        write(*,*) "domain%Rib: ", MAXVAL(domain%Rib), MINVAL(domain%Rib)
+        write(*,*) "domain%hol: ", MAXVAL(domain%hol), MINVAL(domain%hol)
+        write(*,*) "domain%zol: ", MAXVAL(domain%zol), MINVAL(domain%zol)
+        write(*,*) "domain%znt: ", MAXVAL(domain%znt), MINVAL(domain%znt)
+        write(*,*) "domain%ustar: ",MAXVAL(domain%ustar),MINVAL(domain%ustar)
+        write(*,*) "domain%ustar_new: ",MAXVAL(domain%ustar_new),MINVAL(domain%ustar_new)
+        write(*,*) "domain%exch_h: ",MAXVAL(domain%exch_h),MINVAL(domain%exch_h)
+        write(*,*) "domain%z: ", MAXVAL(domain%z),MINVAL(domain%z)
+        write(*,*) "domain%z_agl:",MAXVAL(domain%z_agl),MINVAL(domain%z_agl)
+        write(*,*) "call diagnostic_update in forcing update"
+        call io_write("bc%dqv_dt_bdu.nc","data",bc%dqv_dt)
         call diagnostic_update(domain,options)
+        write(*,*) "after diagnostic update in forcing update"
+        call io_write("bc%dqv_dt_adu.nc","data",bc%dqv_dt)
+        write(*,*) "domain%t: ", MAXVAL(domain%t), MINVAL(domain%t)
+        write(*,*) "domain%th: ", MAXVAL(domain%th), MINVAL(domain%th)
+        write(*,*) "domain%Um: ", MAXVAL(domain%Um), MINVAL(domain%Um)
+        write(*,*) "domain%Vm: ", MAXVAL(domain%Vm), MINVAL(domain%Vm)
+        write(*,*) "domain%u: ", MAXVAL(domain%u), MINVAL(domain%u)
+        write(*,*) "domain%v: ", MAXVAL(domain%v), MINVAL(domain%v)
+        write(*,*) "domain%qv: ", MAXVAL(domain%qv), MINVAL(domain%qv)
+        write(*,*) "domain%cloud: ", MAXVAL(domain%cloud),MINVAL(domain%cloud)
+        write(*,*) "domain%ice: ", MAXVAL(domain%ice), MINVAL(domain%ice)
+        write(*,*) "domain%psim: ", MAXVAL(domain%psim),MINVAL(domain%psim)
+        write(*,*) "domain%psih: ", MAXVAL(domain%psih),MINVAL(domain%psih)
+        write(*,*) "domain%PBLh: ", MAXVAL(domain%PBLh),MINVAL(domain%PBLh)
+        write(*,*) "domain%Rib: ", MAXVAL(domain%Rib), MINVAL(domain%Rib)
+        write(*,*) "domain%hol: ", MAXVAL(domain%hol), MINVAL(domain%hol)
+        write(*,*) "domain%zol: ", MAXVAL(domain%zol), MINVAL(domain%zol)
+        write(*,*) "domain%znt: ", MAXVAL(domain%znt), MINVAL(domain%znt)
+        write(*,*) "domain%ustar: ",MAXVAL(domain%ustar),MINVAL(domain%ustar)
+        write(*,*) "domain%ustar_new: ",MAXVAL(domain%ustar_new),MINVAL(domain%ustar_new)
+        write(*,*) "domain%exch_h: ",MAXVAL(domain%exch_h),MINVAL(domain%exch_h)
+        write(*,*) "domain%z: ", MAXVAL(domain%z),MINVAL(domain%z)
+        write(*,*) "domain%z_agl:",MAXVAL(domain%z_agl),MINVAL(domain%z_agl)
+        write(*,*) "end forcing update"
     end subroutine forcing_update
     
     !>------------------------------------------------------------
@@ -171,6 +220,7 @@ contains
         endif
         
         ! ----- start surface layer calculations usually done by surface layer scheme ----- !
+        write(*,*) "start new surface layer calculations"
         if (options%physics%boundarylayer==kPBL_SIMPLE) then
             !write(*,*) "calculate surface layer based on log wind profile"
             ! temporary constant
@@ -205,7 +255,7 @@ contains
             ! now calculate master ustar based on U and V combined in quadrature
             domain%wspd3d(2:nx-1,1:nz,2:ny-1) = sqrt(domain%Um(2:nx-1,1:nz,2:ny-1)**2 + domain%Vm(2:nx-1,1:nz,2:ny-1)**2) ! added by Patrik Bohlinger in case we need this later for YSU (some variables seem to be 3D in articles like the YSU paper Hong et al. 2006)
             domain%wspd(2:nx-1,2:ny-1) = sqrt(domain%Um(2:nx-1,1,2:ny-1)**2 + domain%Vm(2:nx-1,1,2:ny-1)**2) ! added by Patrik Bohlinger since we need this as input for YSU
-            domain%ustar(2:nx-1,2:ny-1) = domain%wspd(2:nx,2:ny-1) * currw
+            domain%ustar(2:nx-1,2:ny-1) = domain%wspd(2:nx-1,2:ny-1) * currw
             ! ----- end temporary solution ----- !
             ! compute z above ground used for estimating indices for 
             domain%z_agl(2:nx-1,2:ny-1) = (domain%z(2:nx-1,1,2:ny-1)-domain%terrain(2:nx-1,2:ny-1)) !added by Patrik in case we need this later for YSU
@@ -248,8 +298,10 @@ contains
                 !regime = 3
             elsewhere (domain%Rib(2:nx-1,2:ny-1) < 0.)
                 domain%psix(2:nx-1,2:ny-1) = (1-16*(domain%zol(2:nx-1,2:ny-1)))
-                domain%psim(2:nx-1,2:ny-1) = 2*log((1+domain%psix(2:nx-1,2:ny-1))/2) + log((1+domain%psix(2:nx-1,2:ny-1))**2)/2 - 2*atan(1.)*domain%psix+pi/2
-                domain%psih(2:nx-1,2:ny-1) = 2*log((1+domain%psix**2)/2)
+                write(*,*) ((1+domain%psix(2:nx-1,2:ny-1))/2)
+                write(*,*) ((1+domain%psix(2:nx-1,2:ny-1))**2)
+                domain%psim(2:nx-1,2:ny-1) = 2*log((1+domain%psix(2:nx-1,2:ny-1))/2) + log((1+domain%psix(2:nx-1,2:ny-1))**2)/2 - 2*atan(1.)*domain%psix(2:nx-1,2:ny-1)+pi/2
+                domain%psih(2:nx-1,2:ny-1) = 2*log((1+domain%psix(2:nx-1,2:ny-1)**2)/2)
                 !regime = 4
             endwhere
             ! calculate thstar = temperature scale
@@ -275,7 +327,7 @@ contains
             ! compute the dimensionless bulk coefficent for momentum, heat and
             ! moisture
             !domain%exch_m(2:nx-1,2:ny-1) = (karman**2)/(log(domain%z_agl(2:nx-1,2:ny-1)/domain%znt(2:nx-1,2:ny-1)) - domain%psim(2:nx-1,2:ny-1))**2
-            domain%exch_h(2:nx-1,2:ny-1) = (karman**2)/((log(domain%z_agl(2:nx-1,2:ny-1)/domain%znt(2:nx-1,2:ny-1))-domain%psim(2:nx-1,2:ny-1))*(log(domain%z_agl(2:nx-1,2:ny-1)/domain%znt(2:nx-1,2:ny-1))-domain%psih(2:nx-1,2:ny-1)))
+            !domain%exch_h(2:nx-1,2:ny-1) = (karman**2)/((log(domain%z_agl(2:nx-1,2:ny-1)/domain%znt(2:nx-1,2:ny-1))-domain%psim(2:nx-1,2:ny-1))*(log(domain%z_agl(2:nx-1,2:ny-1)/domain%znt(2:nx-1,2:ny-1))-domain%psih(2:nx-1,2:ny-1)))
             !domain%exch_q(2:nx-1,2:ny-1) = (karman**2)/((log(domain%z_agl(2:nx-1,2:ny-1)/domain%znt(2:nx-1,2:ny-1)) - domain%psim(2:nx-1,2:ny-1)) * (log(domain%rho(2:nx-1,1,2:ny-1)*cp*karman*domain%ustar_new(2:nx-1,2:ny-1)*domain%z_agl(2:nx-1,2:ny-1)/cs)-psih(2:nx-1,2:ny-1)))
 
             ! counter is just a variable helping me to detect how much rounds this subroutine went through
@@ -284,6 +336,7 @@ contains
             write(*,*) "Counter: ", counter
             ! end surface layer calculations introduced by Patrik Bohlinger
         endif        
+        write(*,*) "end new surface layer calculations"
         ! ----- end sfc layer calculations ----- !
 
         ! finally, calculate the real vertical motions (including U*dzdx + V*dzdy)
@@ -460,15 +513,216 @@ contains
         do i=1,ntimesteps
             model_time=model_time+dt
             if (dt>1e-5) then
+                write(*,*) "--- before advect ---"
+                write(*,*) "domain%t: ", MAXVAL(domain%t), MINVAL(domain%t)
+                write(*,*) "domain%th: ", MAXVAL(domain%th), MINVAL(domain%th)
+                write(*,*) "domain%Um: ", MAXVAL(domain%Um), MINVAL(domain%Um)
+                write(*,*) "domain%Vm: ", MAXVAL(domain%Vm), MINVAL(domain%Vm)
+                write(*,*) "domain%u: ", MAXVAL(domain%u), MINVAL(domain%u)
+                write(*,*) "domain%v: ", MAXVAL(domain%v), MINVAL(domain%v)
+                write(*,*) "domain%qv: ", MAXVAL(domain%qv), MINVAL(domain%qv)
+                write(*,*) "domain%cloud: ", MAXVAL(domain%cloud),MINVAL(domain%cloud)
+                write(*,*) "domain%ice: ", MAXVAL(domain%ice), MINVAL(domain%ice)
+                write(*,*) "domain%psim: ", MAXVAL(domain%psim),MINVAL(domain%psim)
+                write(*,*) "domain%psih: ", MAXVAL(domain%psih),MINVAL(domain%psih)
+                write(*,*) "domain%PBLh: ", MAXVAL(domain%PBLh),MINVAL(domain%PBLh)
+                write(*,*) "domain%Rib: ", MAXVAL(domain%Rib),MINVAL(domain%Rib)
+                write(*,*) "domain%hol: ", MAXVAL(domain%hol),MINVAL(domain%hol)
+                write(*,*) "domain%zol: ", MAXVAL(domain%zol),MINVAL(domain%zol)
+                write(*,*) "domain%znt: ", MAXVAL(domain%znt),MINVAL(domain%znt)
+                write(*,*) "domain%ustar: ",MAXVAL(domain%ustar),MINVAL(domain%ustar)
+                write(*,*) "domain%ustar_new: ",MAXVAL(domain%ustar_new),MINVAL(domain%ustar_new)
+                write(*,*) "domain%exch_h: ",MAXVAL(domain%exch_h),MINVAL(domain%exch_h)
+                write(*,*) "domain%z: ", MAXVAL(domain%z),MINVAL(domain%z) 
+                write(*,*) "domain%z_agl: ",MAXVAL(domain%z_agl),MINVAL(domain%z_agl)
+                write(*,*) "domain%tend%th: ", MAXVAL(domain%tend%th),MINVAL(domain%tend%th)
+                write(*,*) "domain%tend%qv: ", MAXVAL(domain%tend%qv),MINVAL(domain%tend%qv)
+                write(*,*) "domain%tend%qv_pbl: ", MAXVAL(domain%tend%qv_pbl),MINVAL(domain%tend%qv_pbl)
+                write(*,*) "--- call advect ---"
                 call advect(domain,options,dt)
+                write(*,*) "--- after advect ---"
+                write(*,*) "--- before mp ---"
+                write(*,*) "domain%t: ", MAXVAL(domain%t), MINVAL(domain%t)
+                write(*,*) "domain%th: ", MAXVAL(domain%th), MINVAL(domain%th)
+                write(*,*) "domain%Um: ", MAXVAL(domain%Um), MINVAL(domain%Um)
+                write(*,*) "domain%Vm: ", MAXVAL(domain%Vm), MINVAL(domain%Vm)
+                write(*,*) "domain%u: ", MAXVAL(domain%u), MINVAL(domain%u)
+                write(*,*) "domain%v: ", MAXVAL(domain%v), MINVAL(domain%v)
+                write(*,*) "domain%qv: ", MAXVAL(domain%qv), MINVAL(domain%qv)
+                write(*,*) "domain%cloud: ", MAXVAL(domain%cloud),MINVAL(domain%cloud)
+                write(*,*) "domain%ice: ", MAXVAL(domain%ice), MINVAL(domain%ice)
+                write(*,*) "domain%psim: ", MAXVAL(domain%psim),MINVAL(domain%psim)
+                write(*,*) "domain%psih: ", MAXVAL(domain%psih),MINVAL(domain%psih)
+                write(*,*) "domain%PBLh: ", MAXVAL(domain%PBLh),MINVAL(domain%PBLh)
+                write(*,*) "domain%Rib: ", MAXVAL(domain%Rib), MINVAL(domain%Rib)
+                write(*,*) "domain%hol: ", MAXVAL(domain%hol), MINVAL(domain%hol)
+                write(*,*) "domain%zol: ", MAXVAL(domain%zol), MINVAL(domain%zol)
+                write(*,*) "domain%znt: ", MAXVAL(domain%znt), MINVAL(domain%znt)
+                write(*,*) "domain%ustar: ",MAXVAL(domain%ustar),MINVAL(domain%ustar)
+                write(*,*) "domain%ustar_new: ",MAXVAL(domain%ustar_new),MINVAL(domain%ustar_new)
+                write(*,*) "domain%exch_h: ",MAXVAL(domain%exch_h),MINVAL(domain%exch_h)
+                write(*,*) "domain%z: ", MAXVAL(domain%z),MINVAL(domain%z)
+                write(*,*) "domain%z_agl:",MAXVAL(domain%z_agl),MINVAL(domain%z_agl)
+                write(*,*) "domain%tend%th: ", MAXVAL(domain%tend%th),MINVAL(domain%tend%th)
+                write(*,*) "domain%tend%qv: ", MAXVAL(domain%tend%qv),MINVAL(domain%tend%qv)
+                write(*,*) "domain%tend%qv_pbl: ", MAXVAL(domain%tend%qv_pbl),MINVAL(domain%tend%qv_pbl)
+                write(*,*) "--- call mp ---"
                 call mp(domain,options,dt, model_time)
+                write(*,*) "--- after mp ---"
+                write(*,*) "--- before rad ---"
                 call rad(domain,options,model_time/86400.0+50000, dt)
+                write(*,*) "--- before lsm ---"
                 call lsm(domain,options,dt,model_time)
+                write(*,*) "--- before pbl ---"
+                call io_write("bc%dqv_dt_bpbl.nc","data",bc%dqv_dt)
+                write(*,*) "domain%t: ", MAXVAL(domain%t), MINVAL(domain%t)
+                write(*,*) "domain%th: ", MAXVAL(domain%th), MINVAL(domain%th)
+                write(*,*) "domain%Um: ", MAXVAL(domain%Um), MINVAL(domain%Um)
+                write(*,*) "domain%Vm: ", MAXVAL(domain%Vm), MINVAL(domain%Vm)
+                write(*,*) "domain%u: ", MAXVAL(domain%u), MINVAL(domain%u)
+                write(*,*) "domain%v: ", MAXVAL(domain%v), MINVAL(domain%v)
+                write(*,*) "domain%qv: ", MAXVAL(domain%qv), MINVAL(domain%qv)
+                write(*,*) "domain%cloud: ", MAXVAL(domain%cloud),MINVAL(domain%cloud)
+                write(*,*) "domain%ice: ", MAXVAL(domain%ice), MINVAL(domain%ice)
+                write(*,*) "domain%psim: ", MAXVAL(domain%psim),MINVAL(domain%psim)
+                write(*,*) "domain%psih: ", MAXVAL(domain%psih),MINVAL(domain%psih)
+                write(*,*) "domain%PBLh: ", MAXVAL(domain%PBLh),MINVAL(domain%PBLh)
+                write(*,*) "domain%Rib: ", MAXVAL(domain%Rib), MINVAL(domain%Rib)
+                write(*,*) "domain%hol: ", MAXVAL(domain%hol), MINVAL(domain%hol)
+                write(*,*) "domain%zol: ", MAXVAL(domain%zol), MINVAL(domain%zol)
+                write(*,*) "domain%znt: ", MAXVAL(domain%znt), MINVAL(domain%znt)
+                write(*,*) "domain%ustar: ",MAXVAL(domain%ustar),MINVAL(domain%ustar)
+                write(*,*) "domain%ustar_new: ",MAXVAL(domain%ustar_new),MINVAL(domain%ustar_new)
+                write(*,*) "domain%exch_h: ",MAXVAL(domain%exch_h),MINVAL(domain%exch_h)
+                write(*,*) "domain%z: ", MAXVAL(domain%z),MINVAL(domain%z)
+                write(*,*) "domain%z_agl:",MAXVAL(domain%z_agl),MINVAL(domain%z_agl)
+                write(*,*) "domain%tend%th: ", MAXVAL(domain%tend%th),MINVAL(domain%tend%th)
+                write(*,*) "domain%tend%qv: ", MAXVAL(domain%tend%qv),MINVAL(domain%tend%qv)
+                write(*,*) "domain%tend%qv_pbl: ", MAXVAL(domain%tend%qv_pbl),MINVAL(domain%tend%qv_pbl)
+                write(*,*) "--- call pbl ---"
                 call pbl(domain,options,dt)
+                write(*,*) "--- after pbl ---"
+                call io_write("bc%dqv_dt_apbl.nc","data",bc%dqv_dt)
+                write(*,*) "--- before convect ---"
+                write(*,*) "domain%t: ", MAXVAL(domain%t), MINVAL(domain%t)
+                write(*,*) "domain%th: ", MAXVAL(domain%th), MINVAL(domain%th)
+                write(*,*) "domain%Um: ", MAXVAL(domain%Um), MINVAL(domain%Um)
+                write(*,*) "domain%Vm: ", MAXVAL(domain%Vm), MINVAL(domain%Vm)
+                write(*,*) "domain%u: ", MAXVAL(domain%u), MINVAL(domain%u)
+                write(*,*) "domain%v: ", MAXVAL(domain%v), MINVAL(domain%v)
+                write(*,*) "domain%qv: ", MAXVAL(domain%qv), MINVAL(domain%qv)
+                write(*,*) "domain%cloud: ", MAXVAL(domain%cloud),MINVAL(domain%cloud)
+                write(*,*) "domain%ice: ", MAXVAL(domain%ice), MINVAL(domain%ice)
+                write(*,*) "domain%psim: ", MAXVAL(domain%psim),MINVAL(domain%psim)
+                write(*,*) "domain%psih: ", MAXVAL(domain%psih),MINVAL(domain%psih)
+                write(*,*) "domain%PBLh: ", MAXVAL(domain%PBLh),MINVAL(domain%PBLh)
+                write(*,*) "domain%Rib: ", MAXVAL(domain%Rib), MINVAL(domain%Rib)
+                write(*,*) "domain%hol: ", MAXVAL(domain%hol), MINVAL(domain%hol)
+                write(*,*) "domain%zol: ", MAXVAL(domain%zol), MINVAL(domain%zol)
+                write(*,*) "domain%znt: ", MAXVAL(domain%znt), MINVAL(domain%znt)
+                write(*,*) "domain%ustar: ",MAXVAL(domain%ustar),MINVAL(domain%ustar)
+                write(*,*) "domain%ustar_new: ",MAXVAL(domain%ustar_new),MINVAL(domain%ustar_new)
+                write(*,*) "domain%exch_h: ",MAXVAL(domain%exch_h),MINVAL(domain%exch_h)
+                write(*,*) "domain%z: ", MAXVAL(domain%z),MINVAL(domain%z)
+                write(*,*) "domain%z_agl:",MAXVAL(domain%z_agl),MINVAL(domain%z_agl)
+                write(*,*) "domain%tend%th: ", MAXVAL(domain%tend%th),MINVAL(domain%tend%th)
+                write(*,*) "domain%tend%qv: ", MAXVAL(domain%tend%qv),MINVAL(domain%tend%qv)
+                write(*,*) "domain%tend%qv_pbl: ", MAXVAL(domain%tend%qv_pbl),MINVAL(domain%tend%qv_pbl)
+                write(*,*) "--- call convect ---"
                 call convect(domain,options,dt)
-
+                write(*,*) "--- after convect ---"
+                write(*,*) "domain%t: ", MAXVAL(domain%t), MINVAL(domain%t)
+                write(*,*) "domain%th: ", MAXVAL(domain%th), MINVAL(domain%th)
+                write(*,*) "domain%Um: ", MAXVAL(domain%Um), MINVAL(domain%Um)
+                write(*,*) "domain%Vm: ", MAXVAL(domain%Vm), MINVAL(domain%Vm)
+                write(*,*) "domain%u: ", MAXVAL(domain%u), MINVAL(domain%u)
+                write(*,*) "domain%v: ", MAXVAL(domain%v), MINVAL(domain%v)
+                write(*,*) "domain%qv: ", MAXVAL(domain%qv), MINVAL(domain%qv)
+                write(*,*) "domain%cloud: ", MAXVAL(domain%cloud),MINVAL(domain%cloud)
+                write(*,*) "domain%ice: ", MAXVAL(domain%ice), MINVAL(domain%ice)
+                write(*,*) "domain%psim: ", MAXVAL(domain%psim),MINVAL(domain%psim)
+                write(*,*) "domain%psih: ", MAXVAL(domain%psih),MINVAL(domain%psih)
+                write(*,*) "domain%PBLh: ", MAXVAL(domain%PBLh),MINVAL(domain%PBLh)
+                write(*,*) "domain%Rib: ", MAXVAL(domain%Rib), MINVAL(domain%Rib)
+                write(*,*) "domain%hol: ", MAXVAL(domain%hol), MINVAL(domain%hol)
+                write(*,*) "domain%zol: ", MAXVAL(domain%zol), MINVAL(domain%zol)
+                write(*,*) "domain%znt: ", MAXVAL(domain%znt), MINVAL(domain%znt)
+                write(*,*) "domain%ustar: ",MAXVAL(domain%ustar),MINVAL(domain%ustar)
+                write(*,*) "domain%ustar_new: ",MAXVAL(domain%ustar_new),MINVAL(domain%ustar_new)
+                write(*,*) "domain%exch_h: ",MAXVAL(domain%exch_h),MINVAL(domain%exch_h)
+                write(*,*) "domain%z: ", MAXVAL(domain%z),MINVAL(domain%z)
+                write(*,*) "domain%z_agl:",MAXVAL(domain%z_agl),MINVAL(domain%z_agl)
+                write(*,*) "domain%tend%th: ", MAXVAL(domain%tend%th),MINVAL(domain%tend%th)
+                write(*,*) "domain%tend%qv: ", MAXVAL(domain%tend%qv),MINVAL(domain%tend%qv)
+                write(*,*) "domain%tend%qv_pbl: ", MAXVAL(domain%tend%qv_pbl),MINVAL(domain%tend%qv_pbl)
     !           apply/update boundary conditions including internal wind and pressure changes. 
+                write(*,*) "--- before forcing_update ---"
+                call io_write("domain%exch_h_bfu.nc","data",domain%exch_h)
+                call io_write("domain%th_bfu.nc","data",domain%th)
+                call io_write("domain%cloud_bfu.nc","data",domain%cloud)
+                call io_write("domain%qv_bfu.nc","data",domain%qv)
+                call io_write("domain%PBLh_bfu.nc","data",domain%PBLh)
+                call io_write("bc%dqv_dt_bfu.nc","data",bc%dqv_dt)
+
+                write(*,*) "domain%t: ", MAXVAL(domain%t), MINVAL(domain%t)
+                write(*,*) "domain%th: ", MAXVAL(domain%th), MINVAL(domain%th)
+                write(*,*) "domain%Um: ", MAXVAL(domain%Um), MINVAL(domain%Um)
+                write(*,*) "domain%Vm: ", MAXVAL(domain%Vm), MINVAL(domain%Vm)
+                write(*,*) "domain%u: ", MAXVAL(domain%u), MINVAL(domain%u)
+                write(*,*) "domain%v: ", MAXVAL(domain%v), MINVAL(domain%v)
+                write(*,*) "domain%qv: ", MAXVAL(domain%qv), MINVAL(domain%qv)
+                write(*,*) "domain%cloud: ", MAXVAL(domain%cloud),MINVAL(domain%cloud)
+                write(*,*) "domain%ice: ", MAXVAL(domain%ice), MINVAL(domain%ice)
+                write(*,*) "domain%psim: ", MAXVAL(domain%psim),MINVAL(domain%psim)
+                write(*,*) "domain%psih: ", MAXVAL(domain%psih),MINVAL(domain%psih)
+                write(*,*) "domain%PBLh: ", MAXVAL(domain%PBLh),MINVAL(domain%PBLh)
+                write(*,*) "domain%Rib: ", MAXVAL(domain%Rib), MINVAL(domain%Rib)
+                write(*,*) "domain%hol: ", MAXVAL(domain%hol), MINVAL(domain%hol)
+                write(*,*) "domain%zol: ", MAXVAL(domain%zol), MINVAL(domain%zol)
+                write(*,*) "domain%znt: ", MAXVAL(domain%znt), MINVAL(domain%znt)
+                write(*,*) "domain%ustar: ",MAXVAL(domain%ustar),MINVAL(domain%ustar)
+                write(*,*) "domain%ustar_new: ",MAXVAL(domain%ustar_new),MINVAL(domain%ustar_new)
+                write(*,*) "domain%exch_h: ",MAXVAL(domain%exch_h),MINVAL(domain%exch_h)
+                write(*,*) "domain%z: ", MAXVAL(domain%z),MINVAL(domain%z)
+                write(*,*) "domain%z_agl:",MAXVAL(domain%z_agl),MINVAL(domain%z_agl)
+                write(*,*) "domain%tend%th: ", MAXVAL(domain%tend%th),MINVAL(domain%tend%th)
+                write(*,*) "domain%tend%qv: ", MAXVAL(domain%tend%qv),MINVAL(domain%tend%qv)
+                write(*,*) "domain%tend%qv_pbl: ", MAXVAL(domain%tend%qv_pbl),MINVAL(domain%tend%qv_pbl)
+                write(*,*) "--- call forcing_update ---"
                 call forcing_update(domain,bc,options)
+                write(*,*) "--- after forcing update ---"
+                call io_write("domain%exch_h_afu.nc","data",domain%exch_h)
+                call io_write("domain%th_afu.nc","data",domain%th)
+                call io_write("domain%cloud_afu.nc","data",domain%cloud)
+                call io_write("domain%qv_afu.nc","data",domain%qv)
+                call io_write("domain%PBLh_afu.nc","data",domain%PBLh)
+
+                write(*,*) "domain%t: ", MAXVAL(domain%t), MINVAL(domain%t)
+                write(*,*) "domain%th: ", MAXVAL(domain%th), MINVAL(domain%th)
+                write(*,*) "domain%Um: ", MAXVAL(domain%Um), MINVAL(domain%Um)
+                write(*,*) "domain%Vm: ", MAXVAL(domain%Vm), MINVAL(domain%Vm)
+                write(*,*) "domain%u: ", MAXVAL(domain%u), MINVAL(domain%u)
+                write(*,*) "domain%v: ", MAXVAL(domain%v), MINVAL(domain%v)
+                write(*,*) "domain%qv: ", MAXVAL(domain%qv), MINVAL(domain%qv)
+                write(*,*) "domain%cloud: ", MAXVAL(domain%cloud),MINVAL(domain%cloud)
+                write(*,*) "domain%ice: ", MAXVAL(domain%ice), MINVAL(domain%ice)
+                write(*,*) "domain%psim: ", MAXVAL(domain%psim),MINVAL(domain%psim)
+                write(*,*) "domain%psih: ", MAXVAL(domain%psih),MINVAL(domain%psih)
+                write(*,*) "domain%PBLh: ", MAXVAL(domain%PBLh),MINVAL(domain%PBLh)
+                write(*,*) "domain%Rib: ", MAXVAL(domain%Rib), MINVAL(domain%Rib)
+                write(*,*) "domain%hol: ", MAXVAL(domain%hol), MINVAL(domain%hol)
+                write(*,*) "domain%zol: ", MAXVAL(domain%zol), MINVAL(domain%zol)
+                write(*,*) "domain%znt: ", MAXVAL(domain%znt), MINVAL(domain%znt)
+                write(*,*) "domain%ustar: ",MAXVAL(domain%ustar),MINVAL(domain%ustar)
+                write(*,*) "domain%ustar_new: ",MAXVAL(domain%ustar_new),MINVAL(domain%ustar_new)
+                write(*,*) "domain%exch_h: ",MAXVAL(domain%exch_h),MINVAL(domain%exch_h)
+                write(*,*) "domain%z: ", MAXVAL(domain%z),MINVAL(domain%z)
+                write(*,*) "domain%z_agl:",MAXVAL(domain%z_agl),MINVAL(domain%z_agl)
+                write(*,*) "domain%tend%th: ", MAXVAL(domain%tend%th), MINVAL(domain%tend%th)
+                write(*,*) "domain%tend%qv: ", MAXVAL(domain%tend%qv), MINVAL(domain%tend%qv)
+                write(*,*) "domain%tend%qv_pbl: ", MAXVAL(domain%tend%qv_pbl), MINVAL(domain%tend%qv_pbl)
+                write(*,*) "done, I guess ..."
+                !call io_write("pbl_qv_tendency.nc","data",domain%tend%qv_pbl)
             
     !           step model time forward
                 domain%model_time=model_time

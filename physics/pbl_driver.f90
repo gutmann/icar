@@ -195,7 +195,7 @@ contains
                      domain%skin_t, domain%gz1oz0, domain%wspd, domain%Rib,                                         &
                      dt_in, dtmin_in, domain%kpbl2d,                                                                &
                      SVP1, SVP2, SVP3, SVPT0, EP1, EP2, karman, eomeg,stefan_boltzmann,                             &
-                     domain%exch_h,                                                                                 &
+                     domain%exch_hx,                                                                                &
                      domain%u10, domain%v10,                                                                        &
                      ids,ide, jds,jde, kds,kde,                                                                     &
                      ims,ime, jms,jme, kms,kme,                                                                     &

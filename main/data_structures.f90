@@ -349,6 +349,7 @@ module data_structures
         real, allocatable, dimension(:,:)   :: thvg                 ! virtual th at ground level
         real, allocatable, dimension(:,:)   :: thg                  ! th at ground level
         real, allocatable, dimension(:,:)   :: exch_m               ! exchange coefficient for momentum
+        real, allocatable, dimension(:,:,:)   :: exch_hx            ! exchange coefficient for heat
         real, allocatable, dimension(:,:)   :: exch_h               ! exchange coefficient for heat
         real, allocatable, dimension(:,:)   :: exch_q               ! exchange coefficient for moisture
         integer, allocatable, dimension(:,:)   :: kpbl2d            ! Not clear yet what this does

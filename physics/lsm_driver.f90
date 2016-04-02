@@ -150,9 +150,12 @@ contains
 !----- start new surface layer calculations introduced by Patrik Bohlinger -----!
     subroutine calc_MO_sflayer_exch_coeff(z_agl,znt,psim,psih,ustar_new,rho,exch_m,exch_h,exch_q)
         implicit none
+        integer nx,ny,nz
         real, dimension(:,:),intent(in) :: z_agl,znt,psim,psih,ustar_new
         real, dimension(:,:,:),intent(in) :: rho
         real, dimension(:,:),intent(inout) :: exch_m,exch_h,exch_q
+        nx = size(z_agl,1)
+        ny = size(z_agl,2)
         
         ! compute the dimensionless bulk coefficent for 
         ! momentum, heat and moisture

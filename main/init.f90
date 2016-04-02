@@ -373,6 +373,8 @@ contains
         domain%exch_m=0.01
         allocate(domain%exch_h(nx,ny))      ! exchange coefficient for heat
         domain%exch_h=0.01
+        allocate(domain%exch_hx(nx,nz,ny))      ! exchange coefficient for heat
+        domain%exch_hx=0.01
         allocate(domain%exch_q(nx,ny))      ! exchange coefficient for moisture
         domain%exch_q=0.01
 
