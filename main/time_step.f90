@@ -191,6 +191,7 @@ contains
         type(domain_type), intent(inout) :: domain
         type(options_type), intent(in) :: options
         
+        real, dimension(:,:,:), allocatable :: testlog1, testlog2
         integer :: nx,ny,nz, y, z
         
         nx=size(domain%p,1)
@@ -217,6 +218,8 @@ contains
             allocate(currw(nx-2,ny-2))
             allocate(uw(nx-1,ny-2))
             allocate(vw(nx-2,ny-1))
+            allocate(testlog1(3000,nx-2,ny-1))
+            allocate(testlog2(3000,nx-2,ny-1))
         endif
         
         ! ----- start surface layer calculations usually done by surface layer scheme ----- !
@@ -298,9 +301,13 @@ contains
                 !regime = 3
             elsewhere (domain%Rib(2:nx-1,2:ny-1) < 0.)
                 domain%psix(2:nx-1,2:ny-1) = (1-16*(domain%zol(2:nx-1,2:ny-1)))
-                write(*,*) ((1+domain%psix(2:nx-1,2:ny-1))/2)
-                write(*,*) ((1+domain%psix(2:nx-1,2:ny-1))**2)
-                domain%psim(2:nx-1,2:ny-1) = 2*log((1+domain%psix(2:nx-1,2:ny-1))/2) + log((1+domain%psix(2:nx-1,2:ny-1))**2)/2 - 2*atan(1.)*domain%psix(2:nx-1,2:ny-1)+pi/2
+                !write(*,*) "----- start testprint from logs:"
+                !testlog1(counter,:,:) = ((1+domain%psix(2:nx-1,2:ny-1))/2)
+                !testlog2(counter,:,:) = ((1+domain%psix(2:nx-1,2:ny-1))**2)
+                !write(*,*) "testlog1", MAXVAL(testlog1), MINVAL(testlog1)
+                !write(*,*) "testlog2", MAXVAL(testlog2), MINVAL(testlog2)
+                !write(*,*) "end testprints -----"
+                domain%psim(2:nx-1,2:ny-1) = 2*log((1+domain%psix(2:nx-1,2:ny-1))/2) + log((1+domain%psix(2:nx-1,2:ny-1))**2)/2 - 2*atan(domain%psix(2:nx-1,2:ny-1))+pi/2
                 domain%psih(2:nx-1,2:ny-1) = 2*log((1+domain%psix(2:nx-1,2:ny-1)**2)/2)
                 !regime = 4
             endwhere

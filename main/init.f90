@@ -308,6 +308,8 @@ contains
         allocate(domain%veg_type(nx,ny))        ! Vegetation type
         domain%veg_type=7  ! grassland
         
+        allocate(domain%U10(nx,ny))         ! 10m height wind speed
+        domain%U10=0
         allocate(domain%u10(nx,ny))         ! 10m height U wind
         domain%u10=0
         allocate(domain%v10(nx,ny))         ! 10m height V wind
@@ -316,6 +318,8 @@ contains
         domain%t2m=domain%t(:,1,:)
         allocate(domain%q2m(nx,ny))         ! 2m height air mixing ratio
         domain%q2m=domain%qv(:,1,:)
+        allocate(domain%th2m(nx,ny))         ! 2m height pot. temp.
+        domain%th2m=domain%th(:,1,:)
         
         allocate(domain%znt(nx,ny))         ! surface roughness
         domain%znt=0.2

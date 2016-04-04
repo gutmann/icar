@@ -325,8 +325,10 @@ module data_structures
         real, allocatable, dimension(:,:)   :: ustar                ! surface shear velocity u*                     [m/s]
         real, allocatable, dimension(:,:)   :: pbl_height           ! height of the PBL (only used with PBL=1 & LSM=1)
         real, allocatable, dimension(:,:)   :: u10, v10             ! 10m height u and v winds                      [m/s]
-        real, allocatable, dimension(:,:)   :: t2m, q2m             ! 2m height air temperature                     [K] 
+        real, allocatable, dimension(:,:)   :: U10                  ! 10m height U wind speed                       [m/s]
+        real, allocatable, dimension(:,:)   :: t2m, q2m, th2m       ! 2m height air temperature                     [K] 
                                                                     ! and water vapor mixing ratio                  [kg/kg]
+                                                                    ! and pot. temp.                                [K]
 
         ! Newly added by Patrik
         real, allocatable, dimension(:,:)   :: wspd                 ! windspeed of lowest level                     [m/s]
