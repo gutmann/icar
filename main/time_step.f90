@@ -288,19 +288,29 @@ contains
             domain%Rib(2:nx-1,2:ny-1) = gravity/domain%th(2:nx-1,1,2:ny-1) * domain%z_agl(2:nx-1,2:ny-1) * (domain%thv(2:nx-1,2:ny-1) - domain%thvg(2:nx-1,2:ny-1))/domain%wspd(2:nx-1,2:ny-1) !From Jiminez et al. 2012, from what height should the theta variables really be, Rib is a function of height so actually it should be computed between the sfc layer and a level z bit in WRF it is a 2D input variable
             ! calculate the integrated similarity functions
             where(domain%Rib(2:nx-1,2:ny-1) >= 0.)
-                domain%psim(2:nx-1,2:ny-1) = -10*log(domain%z_agl(2:nx-1,2:ny-1)/domain%znt(2:nx-1,2:ny-1)) ! not clear yet what z really should be
+                domain%psim(2:nx-1,2:ny-1) = -10*log(domain%z_agl(2:nx-1,2:ny-1)/domain%znt(2:nx-1,2:ny-1))
+                domain%psim10(2:nx-1,2:ny-1) = -10*log(10/domain%znt(2:nx-1,2:ny-1))
+                domain%psim2m(2:nx-1,2:ny-1) = -10*log(2/domain%znt(2:nx-1,2:ny-1))
                 domain%psih(2:nx-1,2:ny-1) = domain%psim(2:nx-1,2:ny-1)
+                domain%psih2m(2:nx-1,2:ny-1) = domain%psim2m(2:nx-1,2:ny-1)
                 !regime = 1
             elsewhere (domain%Rib(2:nx-1,2:ny-1) < 0.2 .and. domain%Rib(2:nx-1,2:ny-1) >= 0.0)
                 domain%psim(2:nx-1,2:ny-1) = -5*domain%Rib(2:nx-1,2:ny-1)*log(domain%z_agl(2:nx-1,2:ny-1)/domain%znt(2:nx-1,2:ny-1))/(1.1-5*domain%Rib(2:nx-1,2:ny-1))
+                domain%psim10(2:nx-1,2:ny-1) = -5*domain%Rib(2:nx-1,2:ny-1)*log(10/domain%znt(2:nx-1,2:ny-1))/(1.1-5*domain%Rib(2:nx-1,2:ny-1)) ! Should maybe compute Rib at 10m as well?
+                domain%psim2m(2:nx-1,2:ny-1) = -5*domain%Rib(2:nx-1,2:ny-1)*log(2/domain%znt(2:nx-1,2:ny-1))/(1.1-5*domain%Rib(2:nx-1,2:ny-1)) ! Should maybe compute Rib at 2m as well?
                 domain%psih(2:nx-1,2:ny-1) = domain%psim(2:nx-1,2:ny-1)
+                domain%psih2m(2:nx-1,2:ny-1) = domain%psim2m(2:nx-1,2:ny-1)
                 !regime = 2
             elsewhere (domain%Rib(2:nx-1,2:ny-1).eq.0.)
                 domain%psim(2:nx-1,2:ny-1) = 0
+                domain%psim10(2:nx-1,2:ny-1) = 0
                 domain%psih(2:nx-1,2:ny-1) = 0
+                domain%psih2m(2:nx-1,2:ny-1) = 0
                 !regime = 3
             elsewhere (domain%Rib(2:nx-1,2:ny-1) < 0.)
                 domain%psix(2:nx-1,2:ny-1) = (1-16*(domain%zol(2:nx-1,2:ny-1)))
+                domain%psix10(2:nx-1,2:ny-1) = (1-16*(domain%zol10(2:nx-1,2:ny-1)))
+                domain%psix2m(2:nx-1,2:ny-1) = (1-16*(domain%zol2m(2:nx-1,2:ny-1)))
                 !write(*,*) "----- start testprint from logs:"
                 !testlog1(counter,:,:) = ((1+domain%psix(2:nx-1,2:ny-1))/2)
                 !testlog2(counter,:,:) = ((1+domain%psix(2:nx-1,2:ny-1))**2)
@@ -308,7 +318,9 @@ contains
                 !write(*,*) "testlog2", MAXVAL(testlog2), MINVAL(testlog2)
                 !write(*,*) "end testprints -----"
                 domain%psim(2:nx-1,2:ny-1) = 2*log((1+domain%psix(2:nx-1,2:ny-1))/2) + log((1+domain%psix(2:nx-1,2:ny-1))**2)/2 - 2*atan(domain%psix(2:nx-1,2:ny-1))+pi/2
+                domain%psim10(2:nx-1,2:ny-1) = 2*log((1+domain%psix10(2:nx-1,2:ny-1))/2) + log((1+domain%psix10(2:nx-1,2:ny-1))**2)/2 - 2*atan(domain%psix10(2:nx-1,2:ny-1))+pi/2
                 domain%psih(2:nx-1,2:ny-1) = 2*log((1+domain%psix(2:nx-1,2:ny-1)**2)/2)
+                domain%psih2m(2:nx-1,2:ny-1) = 2*log((1+domain%psix2m(2:nx-1,2:ny-1)**2)/2)
                 !regime = 4
             endwhere
             ! calculate thstar = temperature scale
@@ -323,6 +335,8 @@ contains
             ! calculate the Monin-Obukhov  stability parameter zol (z over l)
             ! using ustar from the similarity theory
             domain%zol(2:nx-1,2:ny-1) = (karman*gravity*domain%z_agl(2:nx-1,2:ny-1))/domain%th(2:nx-1,1,2:ny-1) * domain%thstar(2:nx-1,2:ny-1)/(domain%ustar_new(2:nx-1,2:ny-1)*domain%ustar_new(2:nx-1,2:ny-1))
+            domain%zol10(2:nx-1,2:ny-1) = (karman*gravity*10)/domain%th(2:nx-1,1,2:ny-1) * domain%thstar(2:nx-1,2:ny-1)/(domain%ustar_new(2:nx-1,2:ny-1)*domain%ustar_new(2:nx-1,2:ny-1))
+            domain%zol2m(2:nx-1,2:ny-1) = (karman*gravity*2)/domain%th(2:nx-1,1,2:ny-1) * domain%thstar(2:nx-1,2:ny-1)/(domain%ustar_new(2:nx-1,2:ny-1)*domain%ustar_new(2:nx-1,2:ny-1))
             ! calculate pblh over l using ustar and thstar from the similarity theory
             domain%hol(2:nx-1,2:ny-1) = (karman*gravity*domain%PBLh(2:nx-1,2:ny-1))/domain%th(2:nx-1,1,2:ny-1) * domain%thstar(2:nx-1,2:ny-1)/(domain%ustar_new(2:nx-1,2:ny-1)*domain%ustar_new(2:nx-1,2:ny-1))
             ! arbitrary variables

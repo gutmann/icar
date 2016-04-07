@@ -188,7 +188,7 @@ contains
                      domain%tend%u, domain%tend%v, domain%tend%th,                                                  &
                      domain%tend%qv_pbl, domain%tend%qc, domain%tend%qi,flag_qi,                                    &
                      cp, gravity, rovcp, Rd, rovg,                                                                  &
-                     domain%dz_inter, domain%z_agl, LH_vaporization, Rw,domain%psfc,                                &
+                     domain%dz_inter, domain%z, LH_vaporization, Rw,domain%psfc,                                &
                      domain%ZNU, domain%ZNW, domain%mut, p_top,                                                     &
                      domain%znt, domain%ustar_new, domain%zol, domain%hol,domain%PBLh, domain%psim, domain%psih,    &
                      domain%landmask, domain%sensible_heat, domain%latent_heat,                                     &

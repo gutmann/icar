@@ -148,12 +148,16 @@ contains
     end subroutine calc_exchange_coefficient
 
 !----- start new surface layer calculations introduced by Patrik Bohlinger -----!
-    subroutine calc_MO_sflayer_exch_coeff(z_agl,znt,psim,psih,ustar_new,rho,exch_m,exch_h,exch_q)
+    subroutine calc_MO_sflayer_exch_coeff(wspd,wspd10,z_agl,znt,psim,psim10,psih,psih2m, &
+                                          ustar_new,thg,rho,th,exch_m,exch_h,exch_q,th2m, &
+                                          q2m,qv,skin_t,skin_t_C,es_weights,es,es_water,es_ice,qsg_sat,psfc)
         implicit none
         integer nx,ny,nz
-        real, dimension(:,:),intent(in) :: z_agl,znt,psim,psih,ustar_new
-        real, dimension(:,:,:),intent(in) :: rho
-        real, dimension(:,:),intent(inout) :: exch_m,exch_h,exch_q
+        real, dimension(:,:),intent(inout) :: wspd,z_agl,znt,psim,psim10,psih,psih2m,ustar_new,thg,skin_t,skin_t_C,es_weights,es,es_water,es_ice,qsg_sat,psfc
+        real, dimension(:,:,:),intent(inout) :: rho,th,qv
+        real, dimension(:,:),intent(inout) :: exch_m,exch_h,exch_q ! inout
+        real, dimension(:,:),intent(inout) :: wspd10, th2m, q2m ! inout
+        
         nx = size(z_agl,1)
         ny = size(z_agl,2)
         
@@ -167,7 +171,64 @@ contains
         exch_q(2:nx-1,2:ny-1) = (karman**2) / ((log(z_agl(2:nx-1,2:ny-1) / znt(2:nx-1,2:ny-1)) &
                                         - psim(2:nx-1,2:ny-1)) &
                                         * (log(rho(2:nx-1,1,2:ny-1) * cp * karman * ustar_new(2:nx-1,2:ny-1)&
-                                        * z_agl(2:nx-1,2:ny-1) / cs) - psih(2:nx-1,2:ny-1)))
+                                        * z_agl(2:nx-1,2:ny-1) / cs + z_agl(2:nx-1,2:ny-1)/zl) &
+                                        - psih(2:nx-1,2:ny-1)))
+        ! psim at 10m and psih at 2m required
+        wspd10(2:nx-1,2:ny-1)    = wspd(2:nx-1,2:ny-1)*((log(10/znt(2:nx-1,2:ny-1))-psim10(2:nx-1,2:ny-1))&
+                                /(log(z_agl(2:nx-1,2:ny-1)/znt(2:nx-1,2:ny-1))-psim(2:nx-1,2:ny-1)))
+        ! thg should be properly calculated, right now computed in time_step
+        ! using t2m and exner fct pii
+        th2m(2:nx-1,2:ny-1)    = thg(2:nx-1,2:ny-1) + (th(2:nx-1,1,2:ny-1) - thg(2:nx-1,2:ny-1)) &
+                                * (log(2/znt)-psih2m(2:nx-1,2:ny-1)) &
+                                / (log(z_agl(2:nx-1,2:ny-1)/znt(2:nx-1,2:ny-1)) &
+                                - psih(2:nx-1,2:ny-1))
+
+        !! ----- Compute saturated specific humidity at the ground ----- !
+        !! Need input: sfc pressure and skin_t 
+        !! Computations based on: Clausius_Clapeyron relation
+        !! using the equations given in World Meteorological Organization, 
+        !! Guide to Meteorological Instruments and Methods of Observation, 
+        !! Appendix 4B, WMO-No. 8 (CIMO Guide), Geneva 2008.
+    
+        !! Computes saturation vapor pressure for the given temperature
+        !! Temperature in Celsius
+        skin_t_C(2:nx-1,2:ny-1) = skin_t(2:nx-1,2:ny-1) - SVPT0
+
+        !! Liquid water vapor pressure at saturation [hPa] 
+        es_water(2:nx-1,2:ny-1) = 6.112 * exp((17.62*skin_t_C(2:nx-1,2:ny-1))/(skin_t_C(2:nx-1,2:ny-1)+243.12))
+
+        !! Ice water vapor pressure at saturation [hPa] 
+        es_ice = 6.112 * exp((22.46*skin_t_C)/(skin_t_C+272.62))
+
+        !! Linear weight between water and ice saturation between
+        es_weights=(skin_t_C-skin_t_C_low)/(skin_t_C_high-skin_t_C_low)
+        where(skin_t_C>0.)
+            es_weights(2:nx-1,2:ny-1)=1.
+        elsewhere(skin_t_C<-20.)
+            es_weights(2:nx-1,2:ny-1)=0.
+        endwhere
+
+        !! Saturation vapor pressure 
+        !! Between temp_C_low and temp_C_high a blended value over ice and water is 
+        !! calculated. 
+        es(2:nx-1,2:ny-1)=(es_weights(2:nx-1,2:ny-1)*es_water(2:nx-1,2:ny-1))+((1-es_weights(2:nx-1,2:ny-1))*es_ice(2:nx-1,2:ny-1))
+        !! hPa --> Pa
+        es(2:nx-1,2:ny-1)=es(2:nx-1,2:ny-1)*100
+        !!es_unit='Pa';
+
+        !!calculate specific humidity [kg/kg] from water vapor pressure [Pa]
+        qsg_sat(2:nx-1,2:ny-1)= (RD/RW)* es(2:nx-1,2:ny-1)/(psfc(2:nx-1,2:ny-1)-es(2:nx-1,2:ny-1))
+        !q_unit='kg/kg';
+        ! ----- Computation of saturated specific humidity finished ----- !
+        
+        q2m(2:nx-1,2:ny-1)    = qsg_sat(2:nx-1,2:ny-1) &
+                                + (qv(2:nx-1,1,2:ny-1)-qsg_sat(2:nx-1,2:ny-1)) &
+                                * (log((rho(2:nx-1,1,2:ny-1) * cp * karman * ustar_new(2:nx-1,2:ny-1)*2/cs) &
+                                + 2/zl) &
+                                - psih2m(2:nx-1,2:ny-1)) &
+                                / (log((rho(2:nx-1,1,2:ny-1) * cp * karman * ustar_new(2:nx-1,2:ny-1)*z_agl(2:nx-1,2:ny-1)/cs) &
+                                + z_agl(2:nx-1,2:ny-1)/zl) &
+                                - psih(2:nx-1,2:ny-1))
     end subroutine
 
     !subroutine calc_revised_MO_sflayer_exch_coeff()
@@ -519,7 +580,12 @@ contains
             elseif (exchange_term==2) then
                 call calc_mahrt_holtslag_exchange_coefficient(windspd,domain%skin_t,domain%T,domain%znt,CHS)
             elseif (exchange_term==3) then
-                call calc_MO_sflayer_exch_coeff(domain%z_agl,domain%znt,domain%psim,domain%psih,domain%ustar_new,domain%rho,domain%exch_m,domain%exch_h,domain%exch_q)
+                call calc_MO_sflayer_exch_coeff(domain%wspd,domain%wspd10,domain%z_agl,domain%znt,&
+                                                domain%psim,domain%psim10,domain%psih,domain%psih2m,&
+                                                domain%ustar_new,domain%thg,domain%rho,domain%th,&
+                                                domain%exch_m,domain%exch_h,domain%exch_q,domain%th2m,&
+                                                domain%q2m,domain%qv,domain%skin_t,domain%skin_t_C,&
+                                                domain%es_weights,domain%es,domain%es_water,domain%es_ice,domain%qsg_sat,domain%psfc)
             endif
 !             print*, CHS(128,103)
             CHS2=CHS

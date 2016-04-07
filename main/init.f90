@@ -308,8 +308,8 @@ contains
         allocate(domain%veg_type(nx,ny))        ! Vegetation type
         domain%veg_type=7  ! grassland
         
-        allocate(domain%U10(nx,ny))         ! 10m height wind speed
-        domain%U10=0
+        allocate(domain%wspd10(nx,ny))         ! 10m height wind speed
+        domain%wspd10=0
         allocate(domain%u10(nx,ny))         ! 10m height U wind
         domain%u10=0
         allocate(domain%v10(nx,ny))         ! 10m height V wind
@@ -347,10 +347,26 @@ contains
         domain%thvg=0
         allocate(domain%thg(nx,ny))         ! lowest level th
         domain%thg=0
+        allocate(domain%skin_t_C(nx,ny))   ! temperature in Celsius
+        domain%skin_t_C=0
+        allocate(domain%es_weights(nx,ny))   ! weights for es
+        domain%es_weights=0
+        allocate(domain%es_water(nx,ny))   ! liquid water vapor pressure at saturation
+        domain%es_water=0
+        allocate(domain%es_ice(nx,ny))     ! ice water vapor pressure at saturation
+        domain%es_ice=0
+        allocate(domain%es(nx,ny))           ! water vapor pressure at saturation
+        domain%es=0
+        allocate(domain%qsg_sat(nx,ny))     ! saturated specific humidity at ground level
+        domain%qsg_sat=0
         !allocate(domain%l(nx,ny))          ! Monin-Obukhov length
         !domain%l=0
         allocate(domain%zol(nx,ny))         ! Monin-Obukhov stability paramenter z/l
         domain%zol=0
+        allocate(domain%zol10(nx,ny))         ! Monin-Obukhov stability paramenter z/l at 10m
+        domain%zol10=0
+        allocate(domain%zol2m(nx,ny))         ! Monin-Obukhov stability paramenter z/l at 2m
+        domain%zol2m=0
         allocate(domain%hol(nx,ny))         ! Monin-Obukhov stability paramenter z/l
         domain%hol=0
         allocate(domain%Rib(nx,ny))         ! Bulk-Richardson number
@@ -363,10 +379,20 @@ contains
         domain%wstar_new=0
         allocate(domain%psim(nx,ny))        ! integrated similarity functions for momentum
         domain%psim=0
+        allocate(domain%psim10(nx,ny))      ! integrated similarity functions for momentum at 10m
+        domain%psim10=0
+        allocate(domain%psim2m(nx,ny))      ! integrated similarity functions for momentum at 2m
+        domain%psim2m=0
         allocate(domain%psih(nx,ny))        ! integrated similarity functions for heat
         domain%psih=0
+        allocate(domain%psih2m(nx,ny))      ! integrated similarity functions for heat at 2m
+        domain%psih2m=0
         allocate(domain%psix(nx,ny))        ! x needed to compute psi functions for convective conditions
         domain%psix=0
+        allocate(domain%psix10(nx,ny))      ! x needed to compute psi functions for convective conditions at 10m
+        domain%psix10=0
+        allocate(domain%psix2m(nx,ny))      ! x needed to compute psi functions for convective conditions at 2m
+        domain%psix2m=0
         allocate(domain%kpbl2d(nx,ny))      ! not clear yet what this is
         domain%kpbl2d=0
         allocate(domain%gz1oz0(nx,ny))      ! not clear yet what this is
