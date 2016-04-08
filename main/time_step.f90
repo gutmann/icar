@@ -191,8 +191,10 @@ contains
         type(domain_type), intent(inout) :: domain
         type(options_type), intent(in) :: options
         
-        real, dimension(:,:,:), allocatable :: testlog1, testlog2
+        real :: testlog1, testlog2
+        !real, dimension(:,:,:), allocatable :: testlog1, testlog2
         integer :: nx,ny,nz, y, z
+        integer :: i1,i2
         
         nx=size(domain%p,1)
         nz=size(domain%p,2)
@@ -218,8 +220,8 @@ contains
             allocate(currw(nx-2,ny-2))
             allocate(uw(nx-1,ny-2))
             allocate(vw(nx-2,ny-1))
-            allocate(testlog1(3000,nx-2,ny-1))
-            allocate(testlog2(3000,nx-2,ny-1))
+            !allocate(testlog1(3000,nx-2,ny-1))
+            !allocate(testlog2(3000,nx-2,ny-1))
         endif
         
         ! ----- start surface layer calculations usually done by surface layer scheme ----- !
@@ -287,6 +289,67 @@ contains
 
             domain%Rib(2:nx-1,2:ny-1) = gravity/domain%th(2:nx-1,1,2:ny-1) * domain%z_agl(2:nx-1,2:ny-1) * (domain%thv(2:nx-1,2:ny-1) - domain%thvg(2:nx-1,2:ny-1))/domain%wspd(2:nx-1,2:ny-1) !From Jiminez et al. 2012, from what height should the theta variables really be, Rib is a function of height so actually it should be computed between the sfc layer and a level z bit in WRF it is a 2D input variable
             ! calculate the integrated similarity functions
+            
+!------------ Commented out since changing to do loop for debugging ---------!
+!            where(domain%Rib(2:nx-1,2:ny-1) >= 0.)
+!                domain%psim(2:nx-1,2:ny-1) = -10*log(domain%z_agl(2:nx-1,2:ny-1)/domain%znt(2:nx-1,2:ny-1))
+!                domain%psim10(2:nx-1,2:ny-1) = -10*log(10/domain%znt(2:nx-1,2:ny-1))
+!                domain%psim2m(2:nx-1,2:ny-1) = -10*log(2/domain%znt(2:nx-1,2:ny-1))
+!                domain%psih(2:nx-1,2:ny-1) = domain%psim(2:nx-1,2:ny-1)
+!                domain%psih2m(2:nx-1,2:ny-1) = domain%psim2m(2:nx-1,2:ny-1)
+!                !regime = 1
+!            elsewhere (domain%Rib(2:nx-1,2:ny-1) < 0.2 .and. domain%Rib(2:nx-1,2:ny-1) >= 0.0)
+!                domain%psim(2:nx-1,2:ny-1) = -5*domain%Rib(2:nx-1,2:ny-1)*log(domain%z_agl(2:nx-1,2:ny-1)/domain%znt(2:nx-1,2:ny-1))/(1.1-5*domain%Rib(2:nx-1,2:ny-1))
+!                domain%psim10(2:nx-1,2:ny-1) = -5*domain%Rib(2:nx-1,2:ny-1)*log(10/domain%znt(2:nx-1,2:ny-1))/(1.1-5*domain%Rib(2:nx-1,2:ny-1)) ! Should maybe compute Rib at 10m as well?
+!                domain%psim2m(2:nx-1,2:ny-1) = -5*domain%Rib(2:nx-1,2:ny-1)*log(2/domain%znt(2:nx-1,2:ny-1))/(1.1-5*domain%Rib(2:nx-1,2:ny-1)) ! Should maybe compute Rib at 2m as well?
+!                domain%psih(2:nx-1,2:ny-1) = domain%psim(2:nx-1,2:ny-1)
+!                domain%psih2m(2:nx-1,2:ny-1) = domain%psim2m(2:nx-1,2:ny-1)
+!                !regime = 2
+!            elsewhere (domain%Rib(2:nx-1,2:ny-1).eq.0.)
+!                domain%psim(2:nx-1,2:ny-1) = 0
+!                domain%psim10(2:nx-1,2:ny-1) = 0
+!                domain%psih(2:nx-1,2:ny-1) = 0
+!                domain%psih2m(2:nx-1,2:ny-1) = 0
+!                !regime = 3
+!            elsewhere (domain%Rib(2:nx-1,2:ny-1) < 0.)
+!                domain%psix(2:nx-1,2:ny-1) = (1-16*(domain%zol(2:nx-1,2:ny-1)))
+!                domain%psix10(2:nx-1,2:ny-1) = (1-16*(domain%zol10(2:nx-1,2:ny-1)))
+!                domain%psix2m(2:nx-1,2:ny-1) = (1-16*(domain%zol2m(2:nx-1,2:ny-1)))
+!                !write(*,*) "----- start testprint from logs:"
+!                !testlog1(counter,:,:) = ((1+domain%psix(2:nx-1,2:ny-1))/2)
+!                !testlog2(counter,:,:) = ((1+domain%psix(2:nx-1,2:ny-1))**2)
+!                !write(*,*) "testlog1", MAXVAL(testlog1), MINVAL(testlog1)
+!                !write(*,*) "testlog2", MAXVAL(testlog2), MINVAL(testlog2)
+!                !write(*,*) "end testprints -----"
+!                domain%psim(2:nx-1,2:ny-1) = 2*log((1+domain%psix(2:nx-1,2:ny-1))/2) + log((1+domain%psix(2:nx-1,2:ny-1))**2)/2 - 2*atan(domain%psix(2:nx-1,2:ny-1))+pi/2
+!                domain%psim10(2:nx-1,2:ny-1) = 2*log((1+domain%psix10(2:nx-1,2:ny-1))/2) + log((1+domain%psix10(2:nx-1,2:ny-1))**2)/2 - 2*atan(domain%psix10(2:nx-1,2:ny-1))+pi/2
+!                domain%psih(2:nx-1,2:ny-1) = 2*log((1+domain%psix(2:nx-1,2:ny-1)**2)/2)
+!                domain%psih2m(2:nx-1,2:ny-1) = 2*log((1+domain%psix2m(2:nx-1,2:ny-1)**2)/2)
+!                !regime = 4
+!            endwhere
+!------------ Commented out since changing to do loop for debugging ---------!
+
+!------------ Change to do loop for debugging ---------!
+            do i1=2,nx-1,1
+                do i2=2,ny-1,1
+                    if (domain%Rib(i1,i2)<0.0) then
+                        testlog1 = ((1+domain%psix(i1,i2))/2)
+                        testlog2 = ((1+domain%psix(i1,i2))**2)
+                        if (testlog1<=0.0) then
+                            write(*,*) "testlog1", testlog1
+                        endif
+                        if (testlog1>=1000.0) then
+                            write(*,*) "testlog1", testlog1
+                        endif
+                        if (testlog2<=0.0) then
+                            write(*,*) "testlog2", testlog2
+                        endif
+                        if (testlog2>=1000.0) then
+                            write(*,*) "testlog2", testlog2
+                        endif
+                    endif
+                enddo
+            enddo
             where(domain%Rib(2:nx-1,2:ny-1) >= 0.)
                 domain%psim(2:nx-1,2:ny-1) = -10*log(domain%z_agl(2:nx-1,2:ny-1)/domain%znt(2:nx-1,2:ny-1))
                 domain%psim10(2:nx-1,2:ny-1) = -10*log(10/domain%znt(2:nx-1,2:ny-1))
@@ -296,8 +359,10 @@ contains
                 !regime = 1
             elsewhere (domain%Rib(2:nx-1,2:ny-1) < 0.2 .and. domain%Rib(2:nx-1,2:ny-1) >= 0.0)
                 domain%psim(2:nx-1,2:ny-1) = -5*domain%Rib(2:nx-1,2:ny-1)*log(domain%z_agl(2:nx-1,2:ny-1)/domain%znt(2:nx-1,2:ny-1))/(1.1-5*domain%Rib(2:nx-1,2:ny-1))
-                domain%psim10(2:nx-1,2:ny-1) = -5*domain%Rib(2:nx-1,2:ny-1)*log(10/domain%znt(2:nx-1,2:ny-1))/(1.1-5*domain%Rib(2:nx-1,2:ny-1)) ! Should maybe compute Rib at 10m as well?
-                domain%psim2m(2:nx-1,2:ny-1) = -5*domain%Rib(2:nx-1,2:ny-1)*log(2/domain%znt(2:nx-1,2:ny-1))/(1.1-5*domain%Rib(2:nx-1,2:ny-1)) ! Should maybe compute Rib at 2m as well?
+                domain%psim10(2:nx-1,2:ny-1) = -5*domain%Rib(2:nx-1,2:ny-1)*log(10/domain%znt(2:nx-1,2:ny-1))/(1.1-5*domain%Rib(2:nx-1,2:ny-1))
+! Should maybe compute Rib at 10m as well?
+                domain%psim2m(2:nx-1,2:ny-1) = -5*domain%Rib(2:nx-1,2:ny-1)*log(2/domain%znt(2:nx-1,2:ny-1))/(1.1-5*domain%Rib(2:nx-1,2:ny-1))
+! Should maybe compute Rib at 2m as well?
                 domain%psih(2:nx-1,2:ny-1) = domain%psim(2:nx-1,2:ny-1)
                 domain%psih2m(2:nx-1,2:ny-1) = domain%psim2m(2:nx-1,2:ny-1)
                 !regime = 2
@@ -311,18 +376,14 @@ contains
                 domain%psix(2:nx-1,2:ny-1) = (1-16*(domain%zol(2:nx-1,2:ny-1)))
                 domain%psix10(2:nx-1,2:ny-1) = (1-16*(domain%zol10(2:nx-1,2:ny-1)))
                 domain%psix2m(2:nx-1,2:ny-1) = (1-16*(domain%zol2m(2:nx-1,2:ny-1)))
-                !write(*,*) "----- start testprint from logs:"
-                !testlog1(counter,:,:) = ((1+domain%psix(2:nx-1,2:ny-1))/2)
-                !testlog2(counter,:,:) = ((1+domain%psix(2:nx-1,2:ny-1))**2)
-                !write(*,*) "testlog1", MAXVAL(testlog1), MINVAL(testlog1)
-                !write(*,*) "testlog2", MAXVAL(testlog2), MINVAL(testlog2)
-                !write(*,*) "end testprints -----"
                 domain%psim(2:nx-1,2:ny-1) = 2*log((1+domain%psix(2:nx-1,2:ny-1))/2) + log((1+domain%psix(2:nx-1,2:ny-1))**2)/2 - 2*atan(domain%psix(2:nx-1,2:ny-1))+pi/2
                 domain%psim10(2:nx-1,2:ny-1) = 2*log((1+domain%psix10(2:nx-1,2:ny-1))/2) + log((1+domain%psix10(2:nx-1,2:ny-1))**2)/2 - 2*atan(domain%psix10(2:nx-1,2:ny-1))+pi/2
                 domain%psih(2:nx-1,2:ny-1) = 2*log((1+domain%psix(2:nx-1,2:ny-1)**2)/2)
                 domain%psih2m(2:nx-1,2:ny-1) = 2*log((1+domain%psix2m(2:nx-1,2:ny-1)**2)/2)
                 !regime = 4
             endwhere
+!------------ Change to do loop for debugging ---------!
+
             ! calculate thstar = temperature scale
             domain%thstar(2:nx-1,2:ny-1) = karman*(domain%th(2:nx-1,1,2:ny-1)-domain%thg)/log(domain%z_agl(2:nx-1,2:ny-1)/domain%znt(2:nx-1,2:ny-1))-domain%psih(2:nx-1,2:ny-1)
             ! calculate ustar = horizontal wind speed scale
