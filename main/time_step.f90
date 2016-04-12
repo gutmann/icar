@@ -312,7 +312,26 @@ contains
                                         / domain%wspd(2:nx-1,2:ny-1) 
             ! From Jiminez et al. 2012, from what height should the theta variables really be, Rib is a function of height 
             ! so actually it should be computed between the sfc layer and a level z bit in WRF it is a 2D input variable
-            
+            do i1=2,nx-1,1
+                do i2=2,ny-1,1
+                    if (domain%Rib(i1,i2)<0.0) then
+                        testlog1 = ((1+domain%psix(i1,i2))/2)
+                        testlog2 = ((1+domain%psix(i1,i2))**2)
+                        if (testlog1<=0.0000) then
+                            write(*,*) "testlog1", testlog1
+                        endif
+                        if (testlog1>=1000.0) then
+                            write(*,*) "testlog1", testlog1
+                        endif
+                        if (testlog2<=0.0000) then
+                            write(*,*) "testlog2", testlog2
+                        endif
+                        if (testlog2>=1000.0) then
+                            write(*,*) "testlog2", testlog2
+                        endif
+                    endif
+                enddo
+            enddo
             ! calculate the integrated similarity functions
             where(domain%Rib(2:nx-1,2:ny-1) >= 0.)
                 domain%psim(2:nx-1,2:ny-1) = -10*log(domain%z_agl(2:nx-1,2:ny-1)/domain%znt(2:nx-1,2:ny-1))
@@ -341,10 +360,10 @@ contains
                 domain%psix(2:nx-1,2:ny-1) = (1-16*(domain%zol(2:nx-1,2:ny-1)))
                 domain%psix10(2:nx-1,2:ny-1) = (1-16*(domain%zol10(2:nx-1,2:ny-1)))
                 domain%psix2m(2:nx-1,2:ny-1) = (1-16*(domain%zol2m(2:nx-1,2:ny-1)))
-                domain%psim(2:nx-1,2:ny-1) = 2*log((1+domain%psix(2:nx-1,2:ny-1))/2) & 
+                domain%psim(2:nx-1,2:ny-1) = 2*log((1+domain%psix(2:nx-1,2:ny-1)**2)/2) & 
                                              + log((1+domain%psix(2:nx-1,2:ny-1))**2)/2 &
                                              - 2*atan(domain%psix(2:nx-1,2:ny-1))+pi/2
-                domain%psim10(2:nx-1,2:ny-1) = 2*log((1+domain%psix10(2:nx-1,2:ny-1))/2) &
+                domain%psim10(2:nx-1,2:ny-1) = 2*log((1+domain%psix10(2:nx-1,2:ny-1)**2)/2) &
                                              + log((1+domain%psix10(2:nx-1,2:ny-1))**2)/2 &
                                              - 2*atan(domain%psix10(2:nx-1,2:ny-1))+pi/2
                 domain%psih(2:nx-1,2:ny-1) = 2*log((1+domain%psix(2:nx-1,2:ny-1)**2)/2)
