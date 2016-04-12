@@ -170,8 +170,8 @@ contains
                                         / znt(2:nx-1,2:ny-1)) - psih(2:nx-1,2:ny-1)))
         exch_q(2:nx-1,2:ny-1) = (karman**2) / ((log(z_agl(2:nx-1,2:ny-1) / znt(2:nx-1,2:ny-1)) &
                                         - psim(2:nx-1,2:ny-1)) &
-                                        * (log(rho(2:nx-1,1,2:ny-1) * cp * karman * ustar_new(2:nx-1,2:ny-1)&
-                                        * z_agl(2:nx-1,2:ny-1) / cs + z_agl(2:nx-1,2:ny-1)/zl) &
+                                        * (log((karman * ustar_new(2:nx-1,2:ny-1)&
+                                        * z_agl(2:nx-1,2:ny-1) / XKA) + z_agl(2:nx-1,2:ny-1)/zl) &
                                         - psih(2:nx-1,2:ny-1)))
         ! psim at 10m and psih at 2m required
         wspd10(2:nx-1,2:ny-1)    = wspd(2:nx-1,2:ny-1)*((log(10/znt(2:nx-1,2:ny-1))-psim10(2:nx-1,2:ny-1))&
@@ -223,10 +223,10 @@ contains
         
         q2m(2:nx-1,2:ny-1)    = qsg_sat(2:nx-1,2:ny-1) &
                                 + (qv(2:nx-1,1,2:ny-1)-qsg_sat(2:nx-1,2:ny-1)) &
-                                * (log((rho(2:nx-1,1,2:ny-1) * cp * karman * ustar_new(2:nx-1,2:ny-1)*2/cs) &
+                                * (log((karman * ustar_new(2:nx-1,2:ny-1)*2/XKA) &
                                 + 2/zl) &
                                 - psih2m(2:nx-1,2:ny-1)) &
-                                / (log((rho(2:nx-1,1,2:ny-1) * cp * karman * ustar_new(2:nx-1,2:ny-1)*z_agl(2:nx-1,2:ny-1)/cs) &
+                                / (log((karman * ustar_new(2:nx-1,2:ny-1)*z_agl(2:nx-1,2:ny-1)/XKA) &
                                 + z_agl(2:nx-1,2:ny-1)/zl) &
                                 - psih(2:nx-1,2:ny-1))
     end subroutine
@@ -586,6 +586,7 @@ contains
                                                 domain%exch_m,domain%exch_h,domain%exch_q,domain%th2m,&
                                                 domain%q2m,domain%qv,domain%skin_t,domain%skin_t_C,&
                                                 domain%es_weights,domain%es,domain%es_water,domain%es_ice,domain%qsg_sat,domain%psfc)
+                CHS = domain%exch_h
             endif
 !             print*, CHS(128,103)
             CHS2=CHS

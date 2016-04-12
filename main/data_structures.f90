@@ -137,8 +137,7 @@ module data_structures
     real, parameter :: pi  = 3.1415927 ! pi
     real, parameter :: stefan_boltzmann = 5.67e-8 ! the Stefan-Boltzmann constant
     real, parameter :: karman = 0.41   ! the von Karman constant
-    real, parameter :: cs = 0.01 ! 0.01 over land z0 over water, added by Patrik Bohlinger for calculating exch_q
-    real, parameter :: zl = 0.01 ! 0.01 over land z0 over water, added by Patrik Bohlinger for calculating exch_q
+    real, parameter :: zl = 0.01 ! 0.01 over land z0 over water, added by Patrik Bohlinger for surface layer diagnostics
     
     ! convenience parameters for various physics packages
     real, parameter :: rovcp = Rd/cp
@@ -170,6 +169,9 @@ module data_structures
     real ::  p_top = 10000
     ! critical bulk-richardson #
     real, parameter ::  Rib_cr = 0.5 ! in Hong et al. 2006 they say 0.5 but why not 0.25?
+    ! XKA from wrf surface layer diagnostics 
+    ! XKA = cs/(rho*cp) added by Patrik Bohlinger for calculating exch_q
+    real, parameter :: XKA = 2.4E-5
     ! proportionality factor
     real, parameter :: propfact = 7.8 ! in Hong et al. 2006 this value is suggested
     ! counter
