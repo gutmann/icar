@@ -98,8 +98,8 @@ contains
             ! introduced by Patrik Bohlinger to provide initialization for the
             ! YSU-scheme
             !domain%thvg(2:nx-1,2:ny-1) = domain%thv(2:nx-1,2:ny-1) !for init thvg=thv since thT = 0, t2m should rather be used than skin_t, b=proportionality factor=7.8, Hong et al. 2006 only used for next time steps
-            !domain%PBLh(2:nx-1,2:ny-1) = 0.0
-            domain%PBLh(2:nx-1,2:ny-1) = Rib_cr * domain%thv(2:nx-1,2:ny-1)*domain%wspd3d(2:nx-1,8,2:ny-1)**2 / gravity * (domain%thv3d(2:nx-1,8,2:ny-1)-domain%thvg(2:nx-1,2:ny-1)) 
+            domain%PBLh(2:nx-1,2:ny-1) = 0.0
+            !domain%PBLh(2:nx-1,2:ny-1) = Rib_cr * domain%thv(2:nx-1,2:ny-1)*domain%wspd3d(2:nx-1,8,2:ny-1)**2 / gravity * (domain%thv3d(2:nx-1,8,2:ny-1)-domain%thvg(2:nx-1,2:ny-1)) 
             !U^2 and thv are from height PBLh in equation. Arbitrary height is used in order to be able to use the initialization based on the similarity theory
             ! ----- end surface layer variable initialization ----- !
         endif

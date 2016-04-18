@@ -149,10 +149,10 @@ contains
         write(*,*) "domain%z: ", MAXVAL(domain%z),MINVAL(domain%z)
         write(*,*) "domain%z_agl:",MAXVAL(domain%z_agl),MINVAL(domain%z_agl)
         write(*,*) "call diagnostic_update in forcing update"
-        call io_write("bc%dqv_dt_bdu.nc","data",bc%dqv_dt)
+        !call io_write("bc%dqv_dt_bdu.nc","data",bc%dqv_dt)
         call diagnostic_update(domain,options)
         write(*,*) "after diagnostic update in forcing update"
-        call io_write("bc%dqv_dt_adu.nc","data",bc%dqv_dt)
+        !call io_write("bc%dqv_dt_adu.nc","data",bc%dqv_dt)
         write(*,*) "domain%t: ", MAXVAL(domain%t), MINVAL(domain%t)
         write(*,*) "domain%th: ", MAXVAL(domain%th), MINVAL(domain%th)
         write(*,*) "domain%Um: ", MAXVAL(domain%Um), MINVAL(domain%Um)
@@ -250,17 +250,22 @@ contains
         elseif (options%physics%boundarylayer==kPBL_YSU) then
             ! start surface layer calculations introduced by Patrik Bohlinger
             !write(*,*) "calculate surface layer based on monin-obukhov similarity theory"
+
             ! ----- start temporary solution ----- !
             ! use log-law of the wall to convert from first model level to surface
             currw = karman / log((domain%z(2:nx-1,1,2:ny-1)-domain%terrain(2:nx-1,2:ny-1)) &
                    / domain%znt(2:nx-1,2:ny-1))
             ! use log-law of the wall to convert from surface to 10m height
             lastw = log(10.0 / domain%znt(2:nx-1,2:ny-1)) / karman
-            domain%ustar(2:nx-1,2:ny-1) = domain%Um(2:nx-1,1,2:ny-1) * currw
-            domain%u10(2:nx-1,2:ny-1) = domain%ustar(2:nx-1,2:ny-1) * lastw
+            ! calculate ustar = horizontal wind speed scale
+            if (counter==1) then
+                domain%ustar_new(2:nx-1,2:ny-1) = domain%ustar(2:nx-1,2:ny-1)
+            endif
+            !domain%ustar(2:nx-1,2:ny-1) = domain%Um(2:nx-1,1,2:ny-1) * currw
+            domain%u10(2:nx-1,2:ny-1) = domain%ustar_new(2:nx-1,2:ny-1) * lastw
             domain%ustar(2:nx-1,2:ny-1) = domain%Vm(2:nx-1,1,2:ny-1) * currw
-            domain%v10(2:nx-1,2:ny-1) = domain%ustar(2:nx-1,2:ny-1) * lastw
-            ! now calculate master ustar based on U and V combined in quadrature
+            domain%v10(2:nx-1,2:ny-1) = domain%ustar_new(2:nx-1,2:ny-1) * lastw
+            !now calculate master ustar based on U and V combined in quadrature
             domain%wspd3d(2:nx-1,1:nz,2:ny-1) = sqrt(domain%Um(2:nx-1,1:nz,2:ny-1)**2 & 
                                                 + domain%Vm(2:nx-1,1:nz,2:ny-1)**2) 
             ! added by Patrik Bohlinger in case we need this later for YSU (some variables seem to 
@@ -268,8 +273,9 @@ contains
             domain%wspd(2:nx-1,2:ny-1) = sqrt(domain%Um(2:nx-1,1,2:ny-1)**2 & 
                                        + domain%Vm(2:nx-1,1,2:ny-1)**2) 
             ! added by Patrik Bohlinger since we need this as input for YSU
-            domain%ustar(2:nx-1,2:ny-1) = domain%wspd(2:nx-1,2:ny-1) * currw
+             domain%ustar(2:nx-1,2:ny-1) = domain%wspd(2:nx-1,2:ny-1) * currw
             ! ----- end temporary solution ----- !
+
             ! compute z above ground used for estimating indices for 
             domain%z_agl(2:nx-1,2:ny-1) = (domain%z(2:nx-1,1,2:ny-1)-domain%terrain(2:nx-1,2:ny-1)) 
             !added by Patrik in case we need this later for YSU
@@ -312,34 +318,30 @@ contains
                                         / domain%wspd(2:nx-1,2:ny-1) 
             ! From Jiminez et al. 2012, from what height should the theta variables really be, Rib is a function of height 
             ! so actually it should be computed between the sfc layer and a level z bit in WRF it is a 2D input variable
-            do i1=2,nx-1,1
-                do i2=2,ny-1,1
-                    if (domain%Rib(i1,i2)<0.0) then
-                        testlog1 = ((1+domain%psix(i1,i2))/2)
-                        testlog2 = ((1+domain%psix(i1,i2))**2)
-                        if (testlog1<=0.0000) then
-                            write(*,*) "testlog1", testlog1
-                        endif
-                        if (testlog1>=1000.0) then
-                            write(*,*) "testlog1", testlog1
-                        endif
-                        if (testlog2<=0.0000) then
-                            write(*,*) "testlog2", testlog2
-                        endif
-                        if (testlog2>=1000.0) then
-                            write(*,*) "testlog2", testlog2
-                        endif
-                    endif
-                enddo
-            enddo
+
             ! calculate the integrated similarity functions
             where(domain%Rib(2:nx-1,2:ny-1) >= 0.)
+                where (domain%Rib(2:nx-1,2:ny-1) >= 0. .and. domain%psim(2:nx-1,2:ny-1) > -10.)
+                    domain%psim(2:nx-1,2:ny-1) = -10.
+                endwhere
+                where (domain%Rib(2:nx-1,2:ny-1) >= 0. .and. domain%psih(2:nx-1,2:ny-1) > -10.)
+                    domain%psih(2:nx-1,2:ny-1) = -10.
+                endwhere
+                where (domain%Rib(2:nx-1,2:ny-1) >= 0. .and. domain%psim10(2:nx-1,2:ny-1) > -10.)
+                    domain%psim10(2:nx-1,2:ny-1) = -10.
+                endwhere
+                where (domain%Rib(2:nx-1,2:ny-1) >= 0. .and. domain%psih2m(2:nx-1,2:ny-1) > -10.)
+                    domain%psih2m(2:nx-1,2:ny-1) = -10.
+                endwhere
+                where (domain%Rib(2:nx-1,2:ny-1) >= 0. .and. domain%psim2m(2:nx-1,2:ny-1) > -10.)
+                    domain%psim2m(2:nx-1,2:ny-1) = -10.
+                endwhere
                 domain%psim(2:nx-1,2:ny-1) = -10*log(domain%z_agl(2:nx-1,2:ny-1)/domain%znt(2:nx-1,2:ny-1))
                 domain%psim10(2:nx-1,2:ny-1) = -10*log(10/domain%znt(2:nx-1,2:ny-1))
                 domain%psim2m(2:nx-1,2:ny-1) = -10*log(2/domain%znt(2:nx-1,2:ny-1))
                 domain%psih(2:nx-1,2:ny-1) = domain%psim(2:nx-1,2:ny-1)
                 domain%psih2m(2:nx-1,2:ny-1) = domain%psim2m(2:nx-1,2:ny-1)
-                !regime = 1
+                !regime = 1, very stable night time conditions
             elsewhere (domain%Rib(2:nx-1,2:ny-1) < 0.2 .and. domain%Rib(2:nx-1,2:ny-1) >= 0.0)
                 domain%psim(2:nx-1,2:ny-1) = -5*domain%Rib(2:nx-1,2:ny-1)*log(domain%z_agl(2:nx-1,2:ny-1) & 
                                              /domain%znt(2:nx-1,2:ny-1))/(1.1-5*domain%Rib(2:nx-1,2:ny-1))
@@ -349,26 +351,45 @@ contains
                                              /(1.1-5*domain%Rib(2:nx-1,2:ny-1)) ! Should maybe compute Rib at 2m as well?
                 domain%psih(2:nx-1,2:ny-1) = domain%psim(2:nx-1,2:ny-1)
                 domain%psih2m(2:nx-1,2:ny-1) = domain%psim2m(2:nx-1,2:ny-1)
-                !regime = 2
-            elsewhere (domain%Rib(2:nx-1,2:ny-1).eq.0.)
+                !regime = 2, damped mechanical turbulence
+            elsewhere (domain%Rib(2:nx-1,2:ny-1).eq.0)
                 domain%psim(2:nx-1,2:ny-1) = 0
                 domain%psim10(2:nx-1,2:ny-1) = 0
                 domain%psih(2:nx-1,2:ny-1) = 0
                 domain%psih2m(2:nx-1,2:ny-1) = 0
-                !regime = 3
-            elsewhere (domain%Rib(2:nx-1,2:ny-1) < 0.)
-                domain%psix(2:nx-1,2:ny-1) = (1-16*(domain%zol(2:nx-1,2:ny-1)))
-                domain%psix10(2:nx-1,2:ny-1) = (1-16*(domain%zol10(2:nx-1,2:ny-1)))
-                domain%psix2m(2:nx-1,2:ny-1) = (1-16*(domain%zol2m(2:nx-1,2:ny-1)))
-                domain%psim(2:nx-1,2:ny-1) = 2*log((1+domain%psix(2:nx-1,2:ny-1)**2)/2) & 
+                !regime = 3, forced convection
+            elsewhere (domain%Rib(2:nx-1,2:ny-1) < 0)
+                ! constraints
+                where (domain%Rib(2:nx-1,2:ny-1) < 0. .and. domain%zol(2:nx-1,2:ny-1) < -10.)
+                    domain%zol(2:nx-1,2:ny-1) = -10.
+                endwhere
+                where (domain%Rib(2:nx-1,2:ny-1) < 0. .and. domain%zol(2:nx-1,2:ny-1) > 0.)
+                    domain%zol(2:nx-1,2:ny-1) = 0.
+                endwhere
+                where (domain%Rib(2:nx-1,2:ny-1) < 0. .and. domain%zol10(2:nx-1,2:ny-1) < -10.)
+                    domain%zol10(2:nx-1,2:ny-1) = -10.
+                endwhere
+                where (domain%Rib(2:nx-1,2:ny-1) < 0. .and. domain%zol10(2:nx-1,2:ny-1) > 0.)
+                    domain%zol10(2:nx-1,2:ny-1) = 0.
+                endwhere
+                where (domain%Rib(2:nx-1,2:ny-1) < 0. .and. domain%zol2m(2:nx-1,2:ny-1) < -10.)
+                    domain%zol2m(2:nx-1,2:ny-1) = -10.              
+                endwhere
+                where (domain%Rib(2:nx-1,2:ny-1) < 0. .and. domain%zol2m(2:nx-1,2:ny-1) > 0.)
+                    domain%zol2m(2:nx-1,2:ny-1) = 0.
+                endwhere
+                domain%psix(2:nx-1,2:ny-1) = (1-16*(domain%zol(2:nx-1,2:ny-1)))**0.25
+                domain%psix10(2:nx-1,2:ny-1) = (1-16*(domain%zol10(2:nx-1,2:ny-1)))**0.25
+                domain%psix2m(2:nx-1,2:ny-1) = (1-16*(domain%zol2m(2:nx-1,2:ny-1)))**0.25
+                domain%psim(2:nx-1,2:ny-1) = 2*log((1+domain%psix(2:nx-1,2:ny-1))/2) & 
                                              + log((1+domain%psix(2:nx-1,2:ny-1))**2)/2 &
                                              - 2*atan(domain%psix(2:nx-1,2:ny-1))+pi/2
-                domain%psim10(2:nx-1,2:ny-1) = 2*log((1+domain%psix10(2:nx-1,2:ny-1)**2)/2) &
+                domain%psim10(2:nx-1,2:ny-1) = 2*log((1+domain%psix10(2:nx-1,2:ny-1))/2) &
                                              + log((1+domain%psix10(2:nx-1,2:ny-1))**2)/2 &
                                              - 2*atan(domain%psix10(2:nx-1,2:ny-1))+pi/2
                 domain%psih(2:nx-1,2:ny-1) = 2*log((1+domain%psix(2:nx-1,2:ny-1)**2)/2)
                 domain%psih2m(2:nx-1,2:ny-1) = 2*log((1+domain%psix2m(2:nx-1,2:ny-1)**2)/2)
-                !regime = 4
+                !regime = 4, free convection
             endwhere
             ! constrain psim and psih
             where (domain%psim(2:nx-1,2:ny-1) > 0.9 * log(domain%z_agl(2:nx-1,2:ny-1)/domain%znt(2:nx-1,2:ny-1)))
@@ -379,9 +400,11 @@ contains
             domain%thstar(2:nx-1,2:ny-1) = karman*(domain%th(2:nx-1,1,2:ny-1)-domain%thg) &
                                            / log(domain%z_agl(2:nx-1,2:ny-1) & 
                                            / domain%znt(2:nx-1,2:ny-1))-domain%psih(2:nx-1,2:ny-1)
-            ! calculate ustar = horizontal wind speed scale
-            domain%ustar_new(2:nx-1,2:ny-1) = karman*domain%wspd(2:nx-1,2:ny-1)/(log(domain%z_agl(2:nx-1,2:ny-1) & 
+            ! Averaging ustar with ustar from previous time step to suppress
+            ! large oscillations
+            domain%ustar_tmp(2:nx-1,2:ny-1) = karman*domain%wspd(2:nx-1,2:ny-1)/(log(domain%z_agl(2:nx-1,2:ny-1) & 
                                               / domain%znt(2:nx-1,2:ny-1))-domain%psim(2:nx-1,2:ny-1))
+            domain%ustar_new(2:nx-1,2:ny-1) = (domain%ustar_tmp(2:nx-1,2:ny-1) + domain%ustar_new(2:nx-1,2:ny-1))/2
             ! preventing ustar from being smaller than 0.1 as it could be under
             ! very stable conditions, Jiminez et al. 2012
             where(domain%ustar_new(2:nx-1,2:ny-1) < 0.1)
@@ -660,7 +683,7 @@ contains
                 write(*,*) "--- before lsm ---"
                 call lsm(domain,options,dt,model_time)
                 write(*,*) "--- before pbl ---"
-                call io_write("bc%dqv_dt_bpbl.nc","data",bc%dqv_dt)
+                !call io_write("bc%dqv_dt_bpbl.nc","data",bc%dqv_dt)
                 write(*,*) "domain%t: ", MAXVAL(domain%t), MINVAL(domain%t)
                 write(*,*) "domain%th: ", MAXVAL(domain%th), MINVAL(domain%th)
                 write(*,*) "domain%Um: ", MAXVAL(domain%Um), MINVAL(domain%Um)
@@ -688,7 +711,7 @@ contains
                 write(*,*) "--- call pbl ---"
                 call pbl(domain,options,dt)
                 write(*,*) "--- after pbl ---"
-                call io_write("bc%dqv_dt_apbl.nc","data",bc%dqv_dt)
+                !call io_write("bc%dqv_dt_apbl.nc","data",bc%dqv_dt)
                 write(*,*) "--- before convect ---"
                 write(*,*) "domain%t: ", MAXVAL(domain%t), MINVAL(domain%t)
                 write(*,*) "domain%th: ", MAXVAL(domain%th), MINVAL(domain%th)
@@ -743,12 +766,12 @@ contains
                 write(*,*) "domain%tend%qv_pbl: ", MAXVAL(domain%tend%qv_pbl),MINVAL(domain%tend%qv_pbl)
     !           apply/update boundary conditions including internal wind and pressure changes. 
                 write(*,*) "--- before forcing_update ---"
-                call io_write("domain%exch_h_bfu.nc","data",domain%exch_h)
-                call io_write("domain%th_bfu.nc","data",domain%th)
-                call io_write("domain%cloud_bfu.nc","data",domain%cloud)
-                call io_write("domain%qv_bfu.nc","data",domain%qv)
-                call io_write("domain%PBLh_bfu.nc","data",domain%PBLh)
-                call io_write("bc%dqv_dt_bfu.nc","data",bc%dqv_dt)
+                !call io_write("domain%exch_h_bfu.nc","data",domain%exch_h)
+                !call io_write("domain%th_bfu.nc","data",domain%th)
+                !call io_write("domain%cloud_bfu.nc","data",domain%cloud)
+                !call io_write("domain%qv_bfu.nc","data",domain%qv)
+                !call io_write("domain%PBLh_bfu.nc","data",domain%PBLh)
+                !call io_write("bc%dqv_dt_bfu.nc","data",bc%dqv_dt)
 
                 write(*,*) "domain%t: ", MAXVAL(domain%t), MINVAL(domain%t)
                 write(*,*) "domain%th: ", MAXVAL(domain%th), MINVAL(domain%th)
@@ -777,11 +800,11 @@ contains
                 write(*,*) "--- call forcing_update ---"
                 call forcing_update(domain,bc,options)
                 write(*,*) "--- after forcing update ---"
-                call io_write("domain%exch_h_afu.nc","data",domain%exch_h)
-                call io_write("domain%th_afu.nc","data",domain%th)
-                call io_write("domain%cloud_afu.nc","data",domain%cloud)
-                call io_write("domain%qv_afu.nc","data",domain%qv)
-                call io_write("domain%PBLh_afu.nc","data",domain%PBLh)
+                !call io_write("domain%exch_h_afu.nc","data",domain%exch_h)
+                !call io_write("domain%th_afu.nc","data",domain%th)
+                !call io_write("domain%cloud_afu.nc","data",domain%cloud)
+                !call io_write("domain%qv_afu.nc","data",domain%qv)
+                !call io_write("domain%PBLh_afu.nc","data",domain%PBLh)
 
                 write(*,*) "domain%t: ", MAXVAL(domain%t), MINVAL(domain%t)
                 write(*,*) "domain%th: ", MAXVAL(domain%th), MINVAL(domain%th)

@@ -170,7 +170,7 @@ module data_structures
     ! critical bulk-richardson #
     real, parameter ::  Rib_cr = 0.5 ! in Hong et al. 2006 they say 0.5 but why not 0.25?
     ! XKA from wrf surface layer diagnostics 
-    ! XKA = cs/(rho*cp) added by Patrik Bohlinger for calculating exch_q
+    ! XKA = cs/(rho*cp) from Carlson and Boland, 1978 added by Patrik Bohlinger for calculating exch_q
     real, parameter :: XKA = 2.4E-5
     ! proportionality factor
     real, parameter :: propfact = 7.8 ! in Hong et al. 2006 this value is suggested
@@ -362,6 +362,7 @@ module data_structures
         real, allocatable, dimension(:,:)   :: psix10                ! x needed to compute psi functions for convective conditions at 10m
         real, allocatable, dimension(:,:)   :: psix2m                ! x needed to compute psi functions for convective conditions at 2m
         real, allocatable, dimension(:,:)   :: ustar_new            ! ustar calculated using psi, uscale
+        real, allocatable, dimension(:,:)   :: ustar_tmp            ! ustar_tmp for averaging ustar
         real, allocatable, dimension(:,:)   :: wstar_new            ! wstar calculated using psi, wscale
         real, allocatable, dimension(:,:)   :: gz1oz0               ! 
         real, allocatable, dimension(:,:)   :: thv                  ! thv virtual th in lowest level

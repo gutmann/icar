@@ -374,7 +374,9 @@ contains
         allocate(domain%PBLh(nx,ny))        ! pbl height calculated with psi
         domain%PBLh=0
         allocate(domain%ustar_new(nx,ny))   ! ustar calculated using psi
-        domain%ustar_new=0
+        domain%ustar_new=0.0001
+        allocate(domain%ustar_tmp(nx,ny))   ! ustar calculated using psi
+        domain%ustar_tmp=0.0001
         allocate(domain%wstar_new(nx,ny))   ! wstar calculated using psi
         domain%wstar_new=0
         allocate(domain%psim(nx,ny))        ! integrated similarity functions for momentum

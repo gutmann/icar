@@ -179,7 +179,7 @@ contains
         ! thg should be properly calculated, right now computed in time_step
         ! using t2m and exner fct pii
         th2m(2:nx-1,2:ny-1)    = thg(2:nx-1,2:ny-1) + (th(2:nx-1,1,2:ny-1) - thg(2:nx-1,2:ny-1)) &
-                                * (log(2/znt)-psih2m(2:nx-1,2:ny-1)) &
+                                * (log(2/znt(2:nx-1,2:ny-1))-psih2m(2:nx-1,2:ny-1)) &
                                 / (log(z_agl(2:nx-1,2:ny-1)/znt(2:nx-1,2:ny-1)) &
                                 - psih(2:nx-1,2:ny-1))
 
@@ -198,10 +198,11 @@ contains
         es_water(2:nx-1,2:ny-1) = 6.112 * exp((17.62*skin_t_C(2:nx-1,2:ny-1))/(skin_t_C(2:nx-1,2:ny-1)+243.12))
 
         !! Ice water vapor pressure at saturation [hPa] 
-        es_ice = 6.112 * exp((22.46*skin_t_C)/(skin_t_C+272.62))
+        es_ice(2:nx-1,2:ny-1) = 6.112 * exp((22.46*skin_t_C(2:nx-1,2:ny-1))/(skin_t_C(2:nx-1,2:ny-1)+272.62))
 
         !! Linear weight between water and ice saturation between
-        es_weights=(skin_t_C-skin_t_C_low)/(skin_t_C_high-skin_t_C_low)
+        es_weights(2:nx-1,2:ny-1)= (skin_t_C(2:nx-1,2:ny-1) - skin_t_C_low) &
+                                 / (skin_t_C_high - skin_t_C_low)
         where(skin_t_C>0.)
             es_weights(2:nx-1,2:ny-1)=1.
         elsewhere(skin_t_C<-20.)
@@ -435,7 +436,7 @@ contains
         write(*,*) "Initializing LSM"
         
         if (options%physics%boundarylayer==kPBL_YSU) then
-                exchange_term = 1 ! should be changed to "3", added method 3 for nonlocal similarity theory based calculations for the exchange coefficients
+                exchange_term = 3 ! should be changed to "3", added method 3 for nonlocal similarity theory based calculations for the exchange coefficients
         else
                 exchange_term = 1
         endif
@@ -577,6 +578,7 @@ contains
             windspd=sqrt(domain%u10**2+domain%v10**2)
             if (exchange_term==1) then
                 call calc_exchange_coefficient(windspd,domain%skin_t,domain%T,CHS)
+                !CHS(2:nx-1,2:ny-1) = CHS(2:nx-1,2:ny-1) * domain%wspd(2:nx-1,2:ny-1)
             elseif (exchange_term==2) then
                 call calc_mahrt_holtslag_exchange_coefficient(windspd,domain%skin_t,domain%T,domain%znt,CHS)
             elseif (exchange_term==3) then
@@ -586,10 +588,10 @@ contains
                                                 domain%exch_m,domain%exch_h,domain%exch_q,domain%th2m,&
                                                 domain%q2m,domain%qv,domain%skin_t,domain%skin_t_C,&
                                                 domain%es_weights,domain%es,domain%es_water,domain%es_ice,domain%qsg_sat,domain%psfc)
-                CHS = domain%exch_h
+                CHS(2:nx-1,2:ny-1) = domain%exch_h(2:nx-1,2:ny-1) !* domain%wspd(2:nx-1,2:ny-1)
             endif
 !             print*, CHS(128,103)
-            CHS2=CHS
+            CHS2=CHS 
             CQS2=CHS
             
             ! --------------------------------------------------
