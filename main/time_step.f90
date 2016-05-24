@@ -392,20 +392,20 @@ contains
             elsewhere (domain%Rib(2:nx-1,2:ny-1) < 0)
                 !regime = 4, free convection
                 ! constraints
-                where (domain%Rib(2:nx-1,2:ny-1) < 0. .and. domain%zol(2:nx-1,2:ny-1) < -10.)
-                    domain%zol(2:nx-1,2:ny-1) = -10.
+                where (domain%Rib(2:nx-1,2:ny-1) < 0. .and. domain%zol(2:nx-1,2:ny-1) < -9.9999)
+                    domain%zol(2:nx-1,2:ny-1) = -9.9999
                 endwhere
                 where (domain%Rib(2:nx-1,2:ny-1) < 0. .and. domain%zol(2:nx-1,2:ny-1) > 0.)
                     domain%zol(2:nx-1,2:ny-1) = 0.
                 endwhere
-                where (domain%Rib(2:nx-1,2:ny-1) < 0. .and. domain%zol10(2:nx-1,2:ny-1) < -10.)
-                    domain%zol10(2:nx-1,2:ny-1) = -10.
+                where (domain%Rib(2:nx-1,2:ny-1) < 0. .and. domain%zol10(2:nx-1,2:ny-1) < -9.9999)
+                    domain%zol10(2:nx-1,2:ny-1) = -9.9999
                 endwhere
                 where (domain%Rib(2:nx-1,2:ny-1) < 0. .and. domain%zol10(2:nx-1,2:ny-1) > 0.)
                     domain%zol10(2:nx-1,2:ny-1) = 0.
                 endwhere
-                where (domain%Rib(2:nx-1,2:ny-1) < 0. .and. domain%zol2m(2:nx-1,2:ny-1) < -10.)
-                    domain%zol2m(2:nx-1,2:ny-1) = -10.              
+                where (domain%Rib(2:nx-1,2:ny-1) < 0. .and. domain%zol2m(2:nx-1,2:ny-1) < -9.9999)
+                    domain%zol2m(2:nx-1,2:ny-1) = -9.9999              
                 endwhere
                 where (domain%Rib(2:nx-1,2:ny-1) < 0. .and. domain%zol2m(2:nx-1,2:ny-1) > 0.)
                     domain%zol2m(2:nx-1,2:ny-1) = 0.
