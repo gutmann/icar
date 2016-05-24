@@ -436,7 +436,7 @@ contains
         write(*,*) "Initializing LSM"
         
         if (options%physics%boundarylayer==kPBL_YSU) then
-                exchange_term = 3 ! should be changed to "3", added method 3 for nonlocal similarity theory based calculations for the exchange coefficients
+                exchange_term = 3 ! should be "3", added method 3 for nonlocal similarity theory based calculations for the exchange coefficients
         else
                 exchange_term = 1
         endif
@@ -590,7 +590,7 @@ contains
                                                 domain%es_weights,domain%es,domain%es_water,domain%es_ice,domain%qsg_sat,domain%psfc)
                 CHS(2:nx-1,2:ny-1) = domain%exch_h(2:nx-1,2:ny-1) !* domain%wspd(2:nx-1,2:ny-1)
             endif
-!             print*, CHS(128,103)
+            write(*,*) "CHS: ",MAXVAL(CHS), MINVAL(CHS)
             CHS2=CHS 
             CQS2=CHS
             

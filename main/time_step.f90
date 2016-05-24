@@ -225,9 +225,9 @@ contains
         endif
         
         ! ----- start surface layer calculations usually done by surface layer scheme ----- !
-        write(*,*) "start new surface layer calculations"
+        write(*,*) "start surface layer calculations"
         if (options%physics%boundarylayer==kPBL_SIMPLE) then
-            !write(*,*) "calculate surface layer based on log wind profile"
+            write(*,*) "calculate surface layer based on log wind profile"
             ! temporary constant
             ! use log-law of the wall to convert from first model level to surface
             currw = karman / log((domain%z(2:nx-1,1,2:ny-1)-domain%terrain(2:nx-1,2:ny-1)) &
@@ -249,7 +249,7 @@ contains
             write(*,*) "Counter: ", counter
         elseif (options%physics%boundarylayer==kPBL_YSU) then
             ! start surface layer calculations introduced by Patrik Bohlinger
-            !write(*,*) "calculate surface layer based on monin-obukhov similarity theory"
+            write(*,*) "calculate surface layer based on monin-obukhov similarity theory"
 
             ! ----- start temporary solution ----- !
             ! use log-law of the wall to convert from first model level to surface
@@ -261,6 +261,11 @@ contains
             if (counter==1) then
                 domain%ustar_new(2:nx-1,2:ny-1) = domain%ustar(2:nx-1,2:ny-1)
             endif
+            ! preventing ustar from being smaller than 0.1 as it could be under
+            ! very stable conditions, Jiminez et al. 2012
+            where(domain%ustar_new(2:nx-1,2:ny-1) < 0.1)
+                domain%ustar_new(2:nx-1,2:ny-1) = 0.1
+            endwhere
             !domain%ustar(2:nx-1,2:ny-1) = domain%Um(2:nx-1,1,2:ny-1) * currw
             domain%u10(2:nx-1,2:ny-1) = domain%ustar_new(2:nx-1,2:ny-1) * lastw
             domain%ustar(2:nx-1,2:ny-1) = domain%Vm(2:nx-1,1,2:ny-1) * currw
@@ -307,42 +312,43 @@ contains
             !PBLh variabel to not overwrite pbl_height and compare new with old calculations as the pbl 
             !height is one of the most crucial factors of the non-local surface layer calculations needed by the YSU-scheme
 
-            ! To prevent Rib from becoming too high a lower limit of 0.1 is
-            ! applied Jiminez et al 2012
+            ! Constraint to prevent Rib from becoming too high a lower limit of 0.1 is
+            ! applied in for the original surface layer formulation Jiminez et al 2012
             where(domain%wspd(2:nx-1,2:ny-1) < 0.1)
                 domain%wspd(2:nx-1,2:ny-1) = 0.1
             endwhere
 
             domain%Rib(2:nx-1,2:ny-1) = gravity/domain%th(2:nx-1,1,2:ny-1) * domain%z_agl(2:nx-1,2:ny-1) &
                                         * (domain%thv(2:nx-1,2:ny-1) - domain%thvg(2:nx-1,2:ny-1)) &
-                                        / domain%wspd(2:nx-1,2:ny-1) 
-            ! From Jiminez et al. 2012, from what height should the theta variables really be, Rib is a function of height 
-            ! so actually it should be computed between the sfc layer and a level z bit in WRF it is a 2D input variable
+                                        / domain%wspd(2:nx-1,2:ny-1)**2
+            ! From Jiminez et al. 2012, from what height should the theta variables really be, Rib is a function of height? To my understanding the appropriate height is the lower most level.
 
             ! calculate the integrated similarity functions
-            where(domain%Rib(2:nx-1,2:ny-1) >= 0.)
-                where (domain%Rib(2:nx-1,2:ny-1) >= 0. .and. domain%psim(2:nx-1,2:ny-1) > -10.)
-                    domain%psim(2:nx-1,2:ny-1) = -10.
-                endwhere
-                where (domain%Rib(2:nx-1,2:ny-1) >= 0. .and. domain%psih(2:nx-1,2:ny-1) > -10.)
-                    domain%psih(2:nx-1,2:ny-1) = -10.
-                endwhere
-                where (domain%Rib(2:nx-1,2:ny-1) >= 0. .and. domain%psim10(2:nx-1,2:ny-1) > -10.)
-                    domain%psim10(2:nx-1,2:ny-1) = -10.
-                endwhere
-                where (domain%Rib(2:nx-1,2:ny-1) >= 0. .and. domain%psih2m(2:nx-1,2:ny-1) > -10.)
-                    domain%psih2m(2:nx-1,2:ny-1) = -10.
-                endwhere
-                where (domain%Rib(2:nx-1,2:ny-1) >= 0. .and. domain%psim2m(2:nx-1,2:ny-1) > -10.)
-                    domain%psim2m(2:nx-1,2:ny-1) = -10.
-                endwhere
+            where(domain%Rib(2:nx-1,2:ny-1) >= 0.2)
+                !regime = 1, very stable night time conditions
                 domain%psim(2:nx-1,2:ny-1) = -10*log(domain%z_agl(2:nx-1,2:ny-1)/domain%znt(2:nx-1,2:ny-1))
                 domain%psim10(2:nx-1,2:ny-1) = -10*log(10/domain%znt(2:nx-1,2:ny-1))
                 domain%psim2m(2:nx-1,2:ny-1) = -10*log(2/domain%znt(2:nx-1,2:ny-1))
                 domain%psih(2:nx-1,2:ny-1) = domain%psim(2:nx-1,2:ny-1)
                 domain%psih2m(2:nx-1,2:ny-1) = domain%psim2m(2:nx-1,2:ny-1)
-                !regime = 1, very stable night time conditions
-            elsewhere (domain%Rib(2:nx-1,2:ny-1) < 0.2 .and. domain%Rib(2:nx-1,2:ny-1) >= 0.0)
+                !impose constraints
+                where (domain%Rib(2:nx-1,2:ny-1) >= 0.2 .and. domain%psim(2:nx-1,2:ny-1) < -10.)
+                    domain%psim(2:nx-1,2:ny-1) = -10.
+                endwhere
+                where (domain%Rib(2:nx-1,2:ny-1) >= 0.2 .and. domain%psih(2:nx-1,2:ny-1) < -10.)
+                    domain%psih(2:nx-1,2:ny-1) = -10.
+                endwhere
+                where (domain%Rib(2:nx-1,2:ny-1) >= 0.2 .and. domain%psim10(2:nx-1,2:ny-1) < -10.)
+                    domain%psim10(2:nx-1,2:ny-1) = -10.
+                endwhere
+                where (domain%Rib(2:nx-1,2:ny-1) >= 0.2 .and. domain%psih2m(2:nx-1,2:ny-1) < -10.)
+                    domain%psih2m(2:nx-1,2:ny-1) = -10.
+                endwhere
+                where (domain%Rib(2:nx-1,2:ny-1) >= 0.2 .and. domain%psim2m(2:nx-1,2:ny-1) < -10.)
+                    domain%psim2m(2:nx-1,2:ny-1) = -10.
+                endwhere
+            elsewhere (domain%Rib(2:nx-1,2:ny-1) < 0.2 .and. domain%Rib(2:nx-1,2:ny-1) > 0.0)
+                !regime = 2, damped mechanical turbulence
                 domain%psim(2:nx-1,2:ny-1) = -5*domain%Rib(2:nx-1,2:ny-1)*log(domain%z_agl(2:nx-1,2:ny-1) & 
                                              /domain%znt(2:nx-1,2:ny-1))/(1.1-5*domain%Rib(2:nx-1,2:ny-1))
                 domain%psim10(2:nx-1,2:ny-1) = -5*domain%Rib(2:nx-1,2:ny-1)*log(10/domain%znt(2:nx-1,2:ny-1)) &
@@ -351,14 +357,40 @@ contains
                                              /(1.1-5*domain%Rib(2:nx-1,2:ny-1)) ! Should maybe compute Rib at 2m as well?
                 domain%psih(2:nx-1,2:ny-1) = domain%psim(2:nx-1,2:ny-1)
                 domain%psih2m(2:nx-1,2:ny-1) = domain%psim2m(2:nx-1,2:ny-1)
-                !regime = 2, damped mechanical turbulence
-            elsewhere (domain%Rib(2:nx-1,2:ny-1).eq.0)
-                domain%psim(2:nx-1,2:ny-1) = 0
-                domain%psim10(2:nx-1,2:ny-1) = 0
-                domain%psih(2:nx-1,2:ny-1) = 0
-                domain%psih2m(2:nx-1,2:ny-1) = 0
+                !impose constraints
+                where (domain%Rib(2:nx-1,2:ny-1) < 0.2 .and. &
+                        domain%Rib(2:nx-1,2:ny-1) > 0.0 .and. &
+                        domain%psim(2:nx-1,2:ny-1) < -10.)
+                    domain%psim(2:nx-1,2:ny-1) = -10.
+                endwhere
+                where (domain%Rib(2:nx-1,2:ny-1) < 0.2 .and. &
+                        domain%Rib(2:nx-1,2:ny-1) > 0.0 .and. &
+                        domain%psih(2:nx-1,2:ny-1) < -10.)
+                    domain%psih(2:nx-1,2:ny-1) = -10.
+                endwhere
+                where (domain%Rib(2:nx-1,2:ny-1) < 0.2 .and. &
+                        domain%Rib(2:nx-1,2:ny-1) > 0.0 .and. &
+                        domain%psim10(2:nx-1,2:ny-1) < -10.)
+                    domain%psim10(2:nx-1,2:ny-1) = -10.
+                endwhere
+                where (domain%Rib(2:nx-1,2:ny-1) < 0.2 .and. &
+                        domain%Rib(2:nx-1,2:ny-1) > 0.0 .and. &
+                        domain%psih2m(2:nx-1,2:ny-1) < -10.)
+                    domain%psih2m(2:nx-1,2:ny-1) = -10.
+                endwhere
+                where (domain%Rib(2:nx-1,2:ny-1) < 0.2 .and. &
+                        domain%Rib(2:nx-1,2:ny-1) > 0.0 .and. &
+                        domain%psim2m(2:nx-1,2:ny-1) < -10.)
+                    domain%psim2m(2:nx-1,2:ny-1) = -10.
+                endwhere
+            elsewhere (domain%Rib(2:nx-1,2:ny-1).eq.0.0)
                 !regime = 3, forced convection
+                domain%psim(2:nx-1,2:ny-1) = 0.0
+                domain%psim10(2:nx-1,2:ny-1) = 0.0
+                domain%psih(2:nx-1,2:ny-1) = 0.0
+                domain%psih2m(2:nx-1,2:ny-1) = 0.0
             elsewhere (domain%Rib(2:nx-1,2:ny-1) < 0)
+                !regime = 4, free convection
                 ! constraints
                 where (domain%Rib(2:nx-1,2:ny-1) < 0. .and. domain%zol(2:nx-1,2:ny-1) < -10.)
                     domain%zol(2:nx-1,2:ny-1) = -10.
@@ -378,22 +410,33 @@ contains
                 where (domain%Rib(2:nx-1,2:ny-1) < 0. .and. domain%zol2m(2:nx-1,2:ny-1) > 0.)
                     domain%zol2m(2:nx-1,2:ny-1) = 0.
                 endwhere
-                domain%psix(2:nx-1,2:ny-1) = (1-16*(domain%zol(2:nx-1,2:ny-1)))**0.25
-                domain%psix10(2:nx-1,2:ny-1) = (1-16*(domain%zol10(2:nx-1,2:ny-1)))**0.25
-                domain%psix2m(2:nx-1,2:ny-1) = (1-16*(domain%zol2m(2:nx-1,2:ny-1)))**0.25
-                domain%psim(2:nx-1,2:ny-1) = 2*log((1+domain%psix(2:nx-1,2:ny-1))/2) & 
-                                             + log((1+domain%psix(2:nx-1,2:ny-1))**2)/2 &
-                                             - 2*atan(domain%psix(2:nx-1,2:ny-1))+pi/2
-                domain%psim10(2:nx-1,2:ny-1) = 2*log((1+domain%psix10(2:nx-1,2:ny-1))/2) &
-                                             + log((1+domain%psix10(2:nx-1,2:ny-1))**2)/2 &
-                                             - 2*atan(domain%psix10(2:nx-1,2:ny-1))+pi/2
-                domain%psih(2:nx-1,2:ny-1) = 2*log((1+domain%psix(2:nx-1,2:ny-1)**2)/2)
-                domain%psih2m(2:nx-1,2:ny-1) = 2*log((1+domain%psix2m(2:nx-1,2:ny-1)**2)/2)
-                !regime = 4, free convection
+                domain%psix(2:nx-1,2:ny-1) = (1.-16.*(domain%zol(2:nx-1,2:ny-1)))**0.25
+                domain%psix10(2:nx-1,2:ny-1) = (1.-16.*(domain%zol10(2:nx-1,2:ny-1)))**0.25
+                domain%psix2m(2:nx-1,2:ny-1) = (1.-16.*(domain%zol2m(2:nx-1,2:ny-1)))**0.25
+                domain%psim(2:nx-1,2:ny-1) = 2.*log((1.+domain%psix(2:nx-1,2:ny-1))/2.) & 
+                                             + log((1.+domain%psix(2:nx-1,2:ny-1)**2.)/2.) &
+                                             - 2.*atan(domain%psix(2:nx-1,2:ny-1))+pi/2.
+                domain%psim10(2:nx-1,2:ny-1) = 2.*log((1.+domain%psix10(2:nx-1,2:ny-1))/2.) &
+                                             + log((1.+domain%psix10(2:nx-1,2:ny-1)**2.)/2.) &
+                                             - 2.*atan(domain%psix10(2:nx-1,2:ny-1))+pi/2.
+                domain%psih(2:nx-1,2:ny-1) = 2.*log((1.+domain%psix(2:nx-1,2:ny-1)**2.)/2.)
+                domain%psih2m(2:nx-1,2:ny-1) = 2.*log((1.+domain%psix2m(2:nx-1,2:ny-1)**2.)/2.)
             endwhere
-            ! constrain psim and psih
+            ! constrain psim and psih also for 2m and 10m
             where (domain%psim(2:nx-1,2:ny-1) > 0.9 * log(domain%z_agl(2:nx-1,2:ny-1)/domain%znt(2:nx-1,2:ny-1)))
                 domain%psim(2:nx-1,2:ny-1) = 0.9 * log(domain%z_agl(2:nx-1,2:ny-1)/domain%znt(2:nx-1,2:ny-1))
+            endwhere
+            where (domain%psim2m(2:nx-1,2:ny-1) > 0.9 * log(domain%z_agl(2:nx-1,2:ny-1)/domain%znt(2:nx-1,2:ny-1)))
+                domain%psim2m(2:nx-1,2:ny-1) = 0.9 * log(domain%z_agl(2:nx-1,2:ny-1)/domain%znt(2:nx-1,2:ny-1))
+            endwhere
+            where (domain%psim10(2:nx-1,2:ny-1) > 0.9 * log(domain%z_agl(2:nx-1,2:ny-1)/domain%znt(2:nx-1,2:ny-1)))
+                domain%psim10(2:nx-1,2:ny-1) = 0.9 * log(domain%z_agl(2:nx-1,2:ny-1)/domain%znt(2:nx-1,2:ny-1))
+            endwhere
+            where (domain%psih(2:nx-1,2:ny-1) > 0.9 * log(domain%z_agl(2:nx-1,2:ny-1)/domain%znt(2:nx-1,2:ny-1)))
+                domain%psih(2:nx-1,2:ny-1) = 0.9 * log(domain%z_agl(2:nx-1,2:ny-1)/domain%znt(2:nx-1,2:ny-1))
+            endwhere
+            where (domain%psih2m(2:nx-1,2:ny-1) > 0.9 * log(domain%z_agl(2:nx-1,2:ny-1)/domain%znt(2:nx-1,2:ny-1)))
+                domain%psih2m(2:nx-1,2:ny-1) = 0.9 * log(domain%z_agl(2:nx-1,2:ny-1)/domain%znt(2:nx-1,2:ny-1))
             endwhere
 
             ! calculate thstar = temperature scale
@@ -404,7 +447,7 @@ contains
             ! large oscillations
             domain%ustar_tmp(2:nx-1,2:ny-1) = karman*domain%wspd(2:nx-1,2:ny-1)/(log(domain%z_agl(2:nx-1,2:ny-1) & 
                                               / domain%znt(2:nx-1,2:ny-1))-domain%psim(2:nx-1,2:ny-1))
-            domain%ustar_new(2:nx-1,2:ny-1) = (domain%ustar_tmp(2:nx-1,2:ny-1) + domain%ustar_new(2:nx-1,2:ny-1))/2
+            domain%ustar_new(2:nx-1,2:ny-1) = (domain%ustar_tmp(2:nx-1,2:ny-1) + domain%ustar_new(2:nx-1,2:ny-1))/2.0
             ! preventing ustar from being smaller than 0.1 as it could be under
             ! very stable conditions, Jiminez et al. 2012
             where(domain%ustar_new(2:nx-1,2:ny-1) < 0.1)
@@ -445,7 +488,7 @@ contains
             write(*,*) "Counter: ", counter
             ! end surface layer calculations introduced by Patrik Bohlinger
         endif        
-        write(*,*) "end new surface layer calculations"
+        write(*,*) "end surface layer calculations"
         ! ----- end sfc layer calculations ----- !
 
         ! finally, calculate the real vertical motions (including U*dzdx + V*dzdy)
@@ -770,7 +813,7 @@ contains
                 !call io_write("domain%th_bfu.nc","data",domain%th)
                 !call io_write("domain%cloud_bfu.nc","data",domain%cloud)
                 !call io_write("domain%qv_bfu.nc","data",domain%qv)
-                !call io_write("domain%PBLh_bfu.nc","data",domain%PBLh)
+                call io_write("domain%PBLh_bfu.nc","data",domain%PBLh)
                 !call io_write("bc%dqv_dt_bfu.nc","data",bc%dqv_dt)
 
                 write(*,*) "domain%t: ", MAXVAL(domain%t), MINVAL(domain%t)
@@ -804,7 +847,7 @@ contains
                 !call io_write("domain%th_afu.nc","data",domain%th)
                 !call io_write("domain%cloud_afu.nc","data",domain%cloud)
                 !call io_write("domain%qv_afu.nc","data",domain%qv)
-                !call io_write("domain%PBLh_afu.nc","data",domain%PBLh)
+                call io_write("domain%PBLh_afu.nc","data",domain%PBLh)
 
                 write(*,*) "domain%t: ", MAXVAL(domain%t), MINVAL(domain%t)
                 write(*,*) "domain%th: ", MAXVAL(domain%th), MINVAL(domain%th)
