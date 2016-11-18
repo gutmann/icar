@@ -449,8 +449,9 @@ module data_structures
         logical :: restart              ! this is a restart run, read model conditions from a restart file
         logical :: z_is_geopotential    ! if true the z variable is interpreted as geopotential height
         logical :: z_is_on_interface    ! if true the z variable is interpreted as residing at model level interfaces
+        logical :: use_agl_height       ! interpolate from forcing to model layers using Z above ground level, not sea level
         logical :: advect_density       ! properly incorporate density into the advection calculations. 
-                                        ! Doesn't play nice with linear winds
+        logical :: read_top_boundary    ! if true, the top boundary will be read from the forcing data
         logical :: high_res_soil_state  ! read the soil state from the high res input file not the low res file
         logical :: surface_io_only      ! just output surface variables to speed up run and thin output
         
@@ -484,7 +485,6 @@ module data_structures
         real :: t_offset                ! offset to temperature because WRF outputs potential temperature-300
         real, allocatable, dimension(:)::dz_levels ! model layer thicknesses to be read from namelist
         real :: rotation_scale_height   ! height to minimize wind rotation into the terrain following grid below [m]
-        logical :: use_agl_height       ! interpolate from forcing to model layers using Z above ground level, not sea level
         
         ! defines which physics package to be used. 
         type(physics_type)::physics

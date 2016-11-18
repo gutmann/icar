@@ -465,7 +465,7 @@ contains
         integer :: nz, n_ext_winds,buffer, warning_level, cfl_strictness
         logical :: ideal, readz, readdz, interactive, debug, external_winds, surface_io_only, &
                    mean_winds, mean_fields, restart, advect_density, z_is_geopotential, z_is_on_interface,&
-                   high_res_soil_state, use_agl_height, time_varying_z, &
+                   high_res_soil_state, use_agl_height, time_varying_z, read_top_boundary, &
                    use_mp_options, use_lt_options, use_adv_options, use_lsm_options, use_bias_correction
                    
         character(len=MAXFILELENGTH) :: date, calendar, start_date, forcing_start_date, end_date
@@ -480,7 +480,7 @@ contains
                               mean_winds,mean_fields,restart, z_is_geopotential, z_is_on_interface,&
                               date, calendar, high_res_soil_state,rotation_scale_height,warning_level, &
                               use_agl_height, start_date, forcing_start_date, end_date, time_varying_z, &
-                              cfl_reduction_factor, cfl_strictness, &
+                              cfl_reduction_factor, cfl_strictness, read_top_boundary, &
                               mp_options_filename,      use_mp_options, &
                               lt_options_filename,      use_lt_options, &
                               lsm_options_filename,     use_lsm_options, &
@@ -498,6 +498,7 @@ contains
         advect_density=.False.
         z_is_geopotential=.False.
         z_is_on_interface=.False.
+        read_top_boundary=.False.
         dxlow=100000
         restart=.False.
         ideal=.False.
@@ -624,6 +625,7 @@ contains
         options%z_is_geopotential = z_is_geopotential
         options%z_is_on_interface = z_is_on_interface
         
+        options%read_top_boundary = read_top_boundary
         options%external_winds = external_winds
         options%ext_winds_nfiles = n_ext_winds
         options%restart = restart
