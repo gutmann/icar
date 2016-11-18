@@ -449,7 +449,7 @@ contains
               
         call read_var(domain%v,    ext_winds_file_list(ext_winds_curfile),  options%vvar,  &
               bc%ext_winds%v_geo%geolut,bc%v_geo%vert_lut,ext_winds_curstep,.FALSE.,options)
-        call rotate_ext_wind_field(domain,bc%ext_winds)
+        ! call rotate_ext_wind_field(domain,bc%ext_winds)
     end subroutine ext_winds_init
     
     !>------------------------------------------------------------
@@ -861,8 +861,10 @@ contains
         logical :: boundary_value
         integer::nx,ny,nz,i
         real::domainsize
+        
         ! MODULE variables : curstep, curfile, nfiles, steps_in_file, file_list
         
+        boundary_value=.False.
 !       in case we are using a restart file we have some trickery to do here to find the proper file to be reading from
 !       and set the current time step appropriately... should probably be moved to a subroutine. 
         curfile=1
@@ -1040,7 +1042,7 @@ contains
 
 
     !>------------------------------------------------------------
-    !!  Same as update_dxdt but only for the edges of the domains
+    !!  Same as update_dxdt but only for the edges of the domain
     !!
     !!  This is used for fields that are calculated/updated internally
     !!  by the model physics (e.g. temperature and moisture)
@@ -1072,6 +1074,30 @@ contains
         enddo
     end subroutine update_edges
     
+
+    !>------------------------------------------------------------
+    !!  Same as update_dxdt but only for the top of the domain
+    !!
+    !!  This is used for fields that are calculated/updated internally
+    !!  by the model physics (e.g. temperature and moisture)
+    !!
+    !! @param dx_dt Change in variable X between time periods d1 and d2
+    !! @param d1    Value of field X at time period 1
+    !! @param d2    Value of field X at time period 2
+    !! @retval dx_dt This field is updated along the boundaries to be (d1-d2)
+    !!
+    !!------------------------------------------------------------
+    subroutine update_top(dx_dt,d1,d2)
+        implicit none
+        real,dimension(:,:),   intent(inout) :: dx_dt
+        real,dimension(:,:,:), intent(in) :: d1,d2
+        integer :: nz
+
+        nz=size(d1,2)
+        dx_dt = d1(:,nz,:) - d2(:,nz,:)
+        
+    end subroutine update_top
+
     
     !>------------------------------------------------------------
     !!  Calculate changes between the current boundary conditions and the time step boundary conditions
@@ -1080,12 +1106,14 @@ contains
     !!
     !! @param bc        Model boundary forcing conditions data structure (future conditions and changes)
     !! @param domain    Model domain data structure (current conditions) 
+    !! @param update_top_boundary  Also update dXdT variables for the top boundary condition
     !!
     !!------------------------------------------------------------
-    subroutine update_dxdt(bc,domain)
+    subroutine update_dxdt(bc,domain, update_top_boundary)
         implicit none
-        type(bc_type), intent(inout) :: bc
-        type(domain_type), intent(in) :: domain
+        type(bc_type),     intent(inout) :: bc
+        type(domain_type), intent(in)    :: domain
+        logical,           intent(in)    :: update_top_boundary
         
         ! the only "standard" variable that is always computed is p
         bc%dp_dt=bc%next_domain%p-domain%p
@@ -1102,9 +1130,16 @@ contains
         bc%dsst_dt  =bc%next_domain%sst-domain%sst
         
         ! these fields are only updated along the edges of the domain
-        call update_edges(bc%dth_dt,bc%next_domain%th,domain%th)
-        call update_edges(bc%dqv_dt,bc%next_domain%qv,domain%qv)
-        call update_edges(bc%dqc_dt,bc%next_domain%cloud,domain%cloud)
+        call update_edges(bc%dth_dt,    bc%next_domain%th,      domain%th)
+        call update_edges(bc%dqv_dt,    bc%next_domain%qv,      domain%qv)
+        call update_edges(bc%dqc_dt,    bc%next_domain%cloud,   domain%cloud)
+        
+        if (update_top_boundary) then
+            call update_top(bc%dth_dt_top,  bc%next_domain%th,      domain%th)
+            call update_top(bc%dqv_dt_top,  bc%next_domain%qv,      domain%qv)
+            call update_top(bc%dqc_dt_top,  bc%next_domain%cloud,   domain%cloud)
+        endif            
+        
     end subroutine update_dxdt
 
     !>------------------------------------------------------------
@@ -1253,7 +1288,7 @@ contains
                       bc%ext_winds%u_geo%geolut,bc%u_geo%vert_lut,ext_winds_curstep,use_interior,options)
         call read_var(bc%next_domain%v,    ext_winds_file_list(ext_winds_curfile),options%vvar, &
                       bc%ext_winds%v_geo%geolut,bc%v_geo%vert_lut,ext_winds_curstep,use_interior,options)
-        call rotate_ext_wind_field(bc%next_domain,bc%ext_winds)
+        ! call rotate_ext_wind_field(bc%next_domain,bc%ext_winds)
     
     end subroutine update_ext_winds
     
@@ -1300,8 +1335,10 @@ contains
                 endif
             enddo
         endif
-        use_interior=.False. ! this is passed to the use_boundary flag in geo_interp
-        use_boundary=.True.
+        use_interior = .False. ! this is passed to the use_boundary flag in geo_interp
+        use_boundary = .not.options%read_top_boundary 
+        ! if we are using the top boundary, than we need to read more 
+        ! than just the lateral boundaries
         
         if (options%time_varying_z) then
             ! read in the updated vertical coordinate
@@ -1442,7 +1479,7 @@ contains
         
         ! update scalar dXdt tendency fields first so we can then overwrite them with 
         ! the current model state
-        call update_dxdt(bc,domain)
+        call update_dxdt(bc,domain, options%read_top_boundary)
         
         ! we need the internal values of these fields to be in sync with the high res model
         ! for the linear wind calculations... albeit these are for time t, and winds are for time t+1
