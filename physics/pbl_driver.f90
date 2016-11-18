@@ -53,6 +53,12 @@ contains
         kds=kms; kts=kms; kde=kme; kte=kme
         jds=jms; jts=jms; jde=jme; jte=jme
         
+        ! if we are reading the top boundary condition from the forcing data
+        ! then we don't want to process it in the microphysics
+        if (options%read_top_boundary) then
+            kte = kte - 1
+        endif
+        
         allowed_to_read=.True.
         restart=.False.
         flag_qi=.true.

@@ -281,6 +281,12 @@ contains
             
             kts=kds
             kte=kde
+            ! if we are reading the top boundary condition from the forcing data
+            ! then we don't want to process it in the microphysics
+            if (options%read_top_boundary) then
+                kte = kte - 1
+            endif
+            
             ! set the current tile to the top layer to process microphysics for
             if (options%mp_options%top_mp_level>0) then
                 kte=min(kte, options%mp_options%top_mp_level)

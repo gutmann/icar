@@ -105,7 +105,7 @@ subroutine convect(domain,options,dt_in)
     type(options_type), intent(in)    :: options
     real, intent(in) :: dt_in
     
-    integer :: ids,ide,jds,jde,kds,kde,j,itimestep,STEPCU
+    integer :: ids,ide,jds,jde,kds,kde,kte,j,itimestep,STEPCU
     real :: internal_dt
     
     if (options%physics%convection==0) return
@@ -114,10 +114,16 @@ subroutine convect(domain,options,dt_in)
     STEPCU=1
     ids=1
     ide=size(domain%qv,1)
-    kds=1
-    kde=size(domain%qv,2)
     jds=1
     jde=size(domain%qv,3)
+    kds=1
+    kde=size(domain%qv,2)
+    kte=kde
+    ! if we are reading the top boundary condition from the forcing data
+    ! then we don't want to process it in the microphysics
+    if (options%read_top_boundary) then
+        kte = kte - 1
+    endif
     
     if (.not.allocated(XLAND)) then
         ! if domain%landmask is defined before the call to init_convection, then this should be moved. 
@@ -199,13 +205,13 @@ subroutine convect(domain,options,dt_in)
     !$omp default(shared)
     !$omp do schedule(static)
     do j=jds,jde
-        domain%qv(:,:,j)   =domain%qv(:,:,j)   + domain%tend%Qv(:,:,j)*internal_dt
-        domain%cloud(:,:,j)=domain%cloud(:,:,j)+ domain%tend%Qc(:,:,j)*internal_dt
-        domain%th(:,:,j)   =domain%th(:,:,j)   + domain%tend%TH(:,:,j)*internal_dt
-        domain%ice(:,:,j)  =domain%ice(:,:,j)  + domain%tend%Qi(:,:,j)*internal_dt
+        domain%qv   (:,:kte,j)  =domain%qv   (:,:kte,j) + domain%tend%Qv(:,:kte,j)*internal_dt
+        domain%cloud(:,:kte,j)  =domain%cloud(:,:kte,j) + domain%tend%Qc(:,:kte,j)*internal_dt
+        domain%th   (:,:kte,j)  =domain%th   (:,:kte,j) + domain%tend%TH(:,:kte,j)*internal_dt
+        domain%ice  (:,:kte,j)  =domain%ice  (:,:kte,j) + domain%tend%Qi(:,:kte,j)*internal_dt
         if (options%physics%convection==kCU_KAINFR) then
-            domain%qsnow(:,:,j) =domain%qsnow(:,:,j) + domain%tend%Qs(:,:,j)*internal_dt
-            domain%qrain(:,:,j) =domain%qrain(:,:,j) + domain%tend%Qr(:,:,j)*internal_dt
+            domain%qsnow(:,:kte,j) =domain%qsnow(:,:kte,j) + domain%tend%Qs(:,:kte,j)*internal_dt
+            domain%qrain(:,:kte,j) =domain%qrain(:,:kte,j) + domain%tend%Qr(:,:kte,j)*internal_dt
         endif
                 
         domain%rain(:,j)   =domain%rain(:,j)  + RAINCV(:,j)

@@ -99,8 +99,10 @@ contains
                q(2:nx-1,1,i)      = q(2:nx-1,1,i)      - f5(:,1)                                             &
                                     / rho(2:nx-1,1,i) / dz(2:nx-1,1,i)
                ! add fluxes to top layer
-               q(2:nx-1,nz,i)     = q(2:nx-1,nz,i)     - (qin(2:nx-1,nz,i) * w(2:nx-1,nz,i)-f5(:,nz-1))      &
-                                    / rho(2:nx-1,nz,i) / dz(2:nx-1,nz,i)
+               if (.not.options%read_top_boundary) then
+                   q(2:nx-1,nz,i)     = q(2:nx-1,nz,i)     - (qin(2:nx-1,nz,i) * w(2:nx-1,nz,i)-f5(:,nz-1))      &
+                                        / rho(2:nx-1,nz,i) / dz(2:nx-1,nz,i)
+               endif
            else
                ! perform horizontal advection
                q(2:nx-1,:,i)      = q(2:nx-1,:,i)       - ((f1(2:nx-1,:) - f1(1:nx-2,:)) + (f3 - f4))
@@ -110,7 +112,9 @@ contains
                ! add fluxes to bottom layer
                q(2:nx-1,1,i)      = q(2:nx-1,1,i)       - f5(:,1)
                ! add fluxes to top layer
-               q(2:nx-1,nz,i)     = q(2:nx-1,nz,i)      - (qin(2:nx-1,nz,i) * w(2:nx-1,nz,i) - f5(:,nz-1))
+               if (.not.options%read_top_boundary) then
+                   q(2:nx-1,nz,i)     = q(2:nx-1,nz,i)      - (qin(2:nx-1,nz,i) * w(2:nx-1,nz,i) - f5(:,nz-1))
+               endif
            endif
         enddo
         !$omp end do
