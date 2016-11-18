@@ -1,7 +1,7 @@
 module icar_constants
 
     implicit none
-    character(len=5) :: kVERSION_STRING = "0.9.4"
+    character(len=5) :: kVERSION_STRING = "0.9.5"
 
 ! ------------------------------------------------
 ! Model constants (string lengths)

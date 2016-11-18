@@ -2,7 +2,7 @@
 !   Model and run meta-data
 !---------------------------------------------------------
 &model_version
-    version = "0.9.4",                    ! This must match the version of the compiled code
+    version = "0.9.5",                    ! This must match the version of the compiled code
     comment = "Add your comment here"     ! This will be stored in output files
 /
 
@@ -94,6 +94,9 @@
 
     !   Read dz from the namelist file (below)
     readdz = True,
+    
+    !   Read the top boundary condition for advection from the forcing data
+    read_top_boundary = False,
 
     !   The number of vertical levels to run (suggest ~10-30 levels with a model top around 4-8km)
     !   this is now optional, if not supplied, ICAR will determine it from the number of levels specified
