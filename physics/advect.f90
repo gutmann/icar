@@ -50,13 +50,19 @@ contains
         type(options_type), intent(in)::options
         
         ! interal parameters
-        integer                         :: err, i
+        integer                         :: err, i, top
         real, dimension(1:nx,1:nz,1:ny) :: qin
         real, dimension(1:nx-1,1:nz)    :: f1   ! historical note, there used to be an f2 to store f[x+1]
         real, dimension(1:nx-2,1:nz)    :: f3,f4
         real, dimension(1:nx-2,1:nz-1)  :: f5
         
-        !$omp parallel shared(qin,q,u,v,w,rho,dz) firstprivate(nx,ny,nz) private(i,f1,f3,f4,f5)
+        if (options%read_top_boundary) then
+            top = nz-1
+        else
+            top = nz
+        endif
+        
+        !$omp parallel shared(qin,q,u,v,w,rho,dz) firstprivate(nx,ny,nz, top) private(i,f1,f3,f4,f5)
         !$omp do schedule(static)
         do i=1,ny
             qin(:,:,i)=q(:,:,i)
@@ -88,8 +94,8 @@ contains
            
            if (options%advect_density) then
                ! perform horizontal advection
-               q(2:nx-1,:,i)      = q(2:nx-1,:,i)      - ((f1(2:nx-1,:) - f1(1:nx-2,:)) + (f3 - f4)) &
-                                    / rho(2:nx-1,:,i) / dz(2:nx-1,:,i)
+               q(2:nx-1,1:top,i)      = q(2:nx-1,1:top,i)      - ((f1(2:nx-1,1:top) - f1(1:nx-2,1:top)) + (f3(:,1:top) - f4(:,1:top))) &
+                                      / rho(2:nx-1,1:top,i) / dz(2:nx-1,1:top,i)
                ! then vertical 
                ! (order doesn't matter because fluxes f1-6 are calculated before applying them)
                ! add fluxes to middle layers
@@ -105,7 +111,7 @@ contains
                endif
            else
                ! perform horizontal advection
-               q(2:nx-1,:,i)      = q(2:nx-1,:,i)       - ((f1(2:nx-1,:) - f1(1:nx-2,:)) + (f3 - f4))
+               q(2:nx-1,1:top,i)      = q(2:nx-1,1:top,i)       - ((f1(2:nx-1,1:top) - f1(1:nx-2,1:top)) + (f3(:,1:top) - f4(:,1:top)))
                ! then vertical (order doesn't matter because fluxes f1-6 are calculated before applying them)
                ! add fluxes to middle layers
                q(2:nx-1,2:nz-1,i) = q(2:nx-1,2:nz-1,i)  - (f5(:,2:nz-1) - f5(:,1:nz-2))
