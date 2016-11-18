@@ -691,10 +691,11 @@ contains
 !
 ! ------------------------------------------------------------------------------------------
 !   allocate arrays in boundary condition data structure
-    subroutine boundary_allocate(boundary,nx,nz,ny)
+    subroutine boundary_allocate(boundary,nx,nz,ny, options)
         implicit none
         type(bc_type), intent(inout) :: boundary
         integer,intent(in)::nx,nz,ny
+        type(options_type), intent(in) :: options
         
         allocate(boundary%du_dt(nx+1,nz,ny))
         boundary%du_dt = 0
@@ -702,6 +703,14 @@ contains
         boundary%dv_dt = 0
         allocate(boundary%dp_dt(nx,nz,ny))
         boundary%dp_dt = 0
+        if (options%read_top_boundary) then
+            allocate(boundary%dth_dt_top(nx, ny))
+            boundary%dth_dt_top = 0
+            allocate(boundary%dqv_dt_top(nx, ny))
+            boundary%dqv_dt_top = 0
+            allocate(boundary%dqc_dt_top(nx, ny))
+            boundary%dqc_dt_top = 0
+        endif
         allocate(boundary%dth_dt(nz,max(nx,ny),4))
         boundary%dth_dt = 0
         allocate(boundary%dqv_dt(nz,max(nx,ny),4))
@@ -796,7 +805,7 @@ contains
         nx = size(domain%lat,1)
         ny = size(domain%lat,2)
         
-        call boundary_allocate(boundary,nx,nz,ny)
+        call boundary_allocate(boundary,nx,nz,ny, options)
     end subroutine init_bc_data
     
     
