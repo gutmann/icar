@@ -77,9 +77,10 @@ contains
         type(bc_type),      intent(inout) :: bc
         type(options_type), intent(in)    :: options
         real,               intent(in)    :: dt
-        integer :: j,ny
+        integer :: j,ny, nz
         
         ny = size(domain%p, 3)
+        nz = size(domain%p, 2)
         
         !$omp parallel firstprivate(ny, dt) &
         !$omp private(j) &
@@ -115,6 +116,12 @@ contains
 
             if (trim(options%rain_var)/="") then
                 domain%rain(:,j) = domain%rain(:,j) + (bc%drain_dt(:,j) * dt)
+            endif
+            
+            if (options%read_top_boundary) then
+                domain%th(:,nz,j)    = domain%th(:,nz,j)    + bc%dth_dt_top(:,j) * dt
+                domain%qv(:,nz,j)    = domain%qv(:,nz,j)    + bc%dqv_dt_top(:,j) * dt
+                domain%cloud(:,nz,j) = domain%cloud(:,nz,j) + bc%dqc_dt_top(:,j) * dt
             endif
 
         enddo
@@ -243,6 +250,12 @@ contains
         bc%dqv_dt = bc%dqv_dt / dt
         bc%dqc_dt = bc%dqc_dt / dt
         
+        if (options%read_top_boundary) then
+            bc%dth_dt_top = bc%dth_dt_top / dt
+            bc%dqv_dt_top = bc%dqv_dt_top / dt
+            bc%dqc_dt_top = bc%dqc_dt_top / dt
+        endif
+                
         if (trim(options%rain_var)/="") then
             bc%drain_dt = bc%drain_dt / dt
         endif
