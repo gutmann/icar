@@ -894,7 +894,8 @@
             ni1d(k) = ni(i,k,j)
             nr1d(k) = nr(i,k,j)
          enddo
-
+         !write(*,*) "j: ", j
+         !write(*,*) "i: ", i
          call mp_thompson(qv1d, qc1d, qi1d, qr1d, qs1d, qg1d, ni1d, &
                       nr1d, t1d, p1d, dz1d, &
                       pptrain, pptsnow, pptgraul, pptice, &
@@ -2413,21 +2414,64 @@
 !.. Newton-Raphson iterations (3 should suffice) as provided by B. Hall.
 !+---+-----------------------------------------------------------------+
       do k = kts, kte
+         !write(*,*) "k: ", k
          if ( (ssatw(k).gt. eps) .or. (ssatw(k).lt. -eps .and. &
                    L_qc(k)) ) then
           clap = (qv(k)-qvs(k))/(1. + lvt2(k)*qvs(k))
           do n = 1, 3
+             !write(*,*) "----- start control output mp_thompson-----"
+             !write(*,*) "n: ", n
+             !write(*,*) "fcd: ", fcd
+             !write(*,*) "dfcd: ", dfcd
+             !write(*,*) "qvs(k): ", qvs(k)
+             !write(*,*) "lvt2(k): ", lvt2(k)
+             !write(*,*) "clap: ", clap
+             !write(*,*) "qv(k): ", qv(k)
              fcd = qvs(k)* EXP(lvt2(k)*clap) - qv(k) + clap
              dfcd = qvs(k)*lvt2(k)* EXP(lvt2(k)*clap) + 1.
              clap = clap - fcd/dfcd
+             !write(*,*) "----------"
+             !write(*,*) "n: ", n
+             !write(*,*) "fcd: ", fcd
+             !write(*,*) "dfcd: ", dfcd
+             !write(*,*) "qvs(k): ", qvs(k)
+             !write(*,*) "lvt2(k): ", lvt2(k)
+             !write(*,*) "clap: ", clap
+             !write(*,*) "qv(k): ", qv(k)
           enddo
           xrc = rc(k) + clap
+          !write(*,*) "----------"
+          !write(*,*) "fcd: ", fcd
+          !write(*,*) "dfcd: ", dfcd
+          !write(*,*) "qvs(k): ", qvs(k)
+          !write(*,*) "lvt2(k): ", lvt2(k)
+          !write(*,*) "clap: ", clap
+          !write(*,*) "qv(k): ", qv(k)
+          !write(*,*) "rc(k): ", rc(k)
+          !write(*,*) "xrc: ", xrc
           if (xrc.gt. 0.0) then
              prw_vcd(k) = clap*odt
           else
              prw_vcd(k) = -rc(k)/rho(k)*odts
           endif
-
+          !write(*,*) "----------"
+          !write(*,*) "qvs(k): ", qvs(k)
+          !write(*,*) "lvt2(k): ", lvt2(k)
+          !write(*,*) "clap: ", clap
+          !write(*,*) "qv(k): ", qv(k)
+          !write(*,*) "rc(k): ", rc(k)
+          !write(*,*) "xrc: ", xrc
+          !write(*,*) "prw_vcd(k): ", prw_vcd(k)
+          !write(*,*) "odt: ", odt
+          !write(*,*) "odts: ", odts
+          !write(*,*) "qcten(k): ", qcten(k)
+          !write(*,*) "qvten(k): ", qvten(k)
+          !write(*,*) "tten(k): ", tten(k)
+          !write(*,*) "temp(k): ", temp(k)
+          !write(*,*) "rho(k): ", rho(k)
+          !write(*,*) "ssatw(k): ", ssatw(k)
+          !write(*,*) "pres(k): ", pres(k)
+          !write(*,*) "rslf(pres(k),temp(k)): ", rslf(pres(k),temp(k))
           qcten(k) = qcten(k) + prw_vcd(k)
           qvten(k) = qvten(k) - prw_vcd(k)
           tten(k) = tten(k) + lvap(k)*ocp(k)*prw_vcd(k)*(1-IFDRY)
@@ -2437,6 +2481,7 @@
           rho(k) = 0.622*pres(k)/(RR2*temp(k)*(qv(k)+0.622))
           qvs(k) = rslf(pres(k), temp(k))
           ssatw(k) = qv(k)/qvs(k) - 1.
+          !write(*,*) "----- end control output mp_thompson-----"
          endif
       enddo
 

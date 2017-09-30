@@ -265,11 +265,57 @@ module data_structures
         real, allocatable, dimension(:,:)   :: ustar                ! surface shear velocity u*                     [m/s]
         real, allocatable, dimension(:,:)   :: pbl_height           ! height of the PBL (only used with PBL=1 & LSM=1)
         real, allocatable, dimension(:,:)   :: u10, v10             ! 10m height u and v winds                      [m/s]
-        real, allocatable, dimension(:,:)   :: t2m, q2m             ! 2m height air temperature                     [K]
-                                                                    ! and water vapor mixing ratio                  [kg/kg]
 
         real, allocatable, dimension(:,:)   :: terrain_blocking     ! smoothed terrain delta for froude num calc.   [m]
         logical :: blocking_initialized                             ! flag to mark that the terrain_blocking field has been initialized
+
+        real, allocatable, dimension(:,:)   :: wspd10               ! 10m height U wind speed                       [m/s]
+        real, allocatable, dimension(:,:)   :: t2m, q2m, th2m       ! 2m height air temperature                     [K]
+                                                                    ! and water vapor mixing ratio                  [kg/kg]
+                                                                    ! and pot. temp.                                [K]
+
+        ! Newly added by Patrik
+        real, allocatable, dimension(:,:)   :: wspd                 ! windspeed of lowest level                     [m/s]
+        real, allocatable, dimension(:,:,:) :: wspd3d               ! windspeed of lowest level                     [m/s]
+        real, allocatable, dimension(:,:)   :: z_agl                ! z above ground                                [m]
+        real, allocatable, dimension(:,:)   :: thstar               ! temperature scale                             [K]
+        real, allocatable, dimension(:,:) :: skin_t_C               ! skin temperature in Celsius                   [C]
+        real, allocatable, dimension(:,:) :: es_weights              ! weights for sat. water vapor press calculation
+        real, allocatable, dimension(:,:) :: es_water               ! liquid water vapor pressure at saturation     [hPa]
+        real, allocatable, dimension(:,:) :: es_ice                 ! ice water vapor pressure at saturation        [hPa]
+        real, allocatable, dimension(:,:) :: es                     ! vapor pressure at saturation                  [hPa]
+        real, allocatable, dimension(:,:) :: qsg_sat                ! saturated specific humidity
+        !real, allocatable, dimension(:,:)   :: l                   ! Monin-Obukhov length                          [m]
+        real, allocatable, dimension(:,:)   :: zol                  ! Monin-Obukhov stability parameter z/l         [dimensionless]
+        real, allocatable, dimension(:,:)   :: zol10                ! Monin-Obukhov stability parameter z/l  at 10m [dimensionless]
+        real, allocatable, dimension(:,:)   :: zol2m                ! Monin-Obukhov stability parameter z/l  at 2m  [dimensionless]
+        real, allocatable, dimension(:,:)   :: hol                  ! pbl height over Monin-Obukhov length
+        real, allocatable, dimension(:,:)   :: Rib                  ! Bulk-Richardson number
+        real, allocatable, dimension(:,:)   :: PBLh                 ! pbl height used psi
+        real, allocatable, dimension(:,:)   :: psim                 ! integrated similarity functions for momentum
+        real, allocatable, dimension(:,:)   :: psim10               ! integrated similarity functions for momentum at 10m
+        real, allocatable, dimension(:,:)   :: psim2m               ! integrated similarity functions for momentum at 2m
+        real, allocatable, dimension(:,:)   :: psih                 ! integrated similarity functions for heat
+        real, allocatable, dimension(:,:)   :: psih2m               ! integrated similarity functions for heat at 2m
+        real, allocatable, dimension(:,:)   :: psix                 ! x needed to compute psi functions for convective conditions
+        real, allocatable, dimension(:,:)   :: psix10                ! x needed to compute psi functions for convective conditions at 10m
+        real, allocatable, dimension(:,:)   :: psix2m                ! x needed to compute psi functions for convective conditions at 2m
+        real, allocatable, dimension(:,:)   :: ustar_new            ! ustar calculated using psi, uscale
+        real, allocatable, dimension(:,:)   :: ustar_tmp            ! ustar_tmp for averaging ustar
+        real, allocatable, dimension(:,:)   :: wstar_new            ! wstar calculated using psi, wscale
+        real, allocatable, dimension(:,:)   :: gz1oz0               !
+        real, allocatable, dimension(:,:)   :: thv                  ! thv virtual th in lowest level
+        real, allocatable, dimension(:,:,:) :: thv3d              ! thv virtual th on full 3d field
+        real, allocatable, dimension(:,:)   :: thvg                 ! virtual th at ground level
+        real, allocatable, dimension(:,:)   :: thg                  ! th at ground level
+        real, allocatable, dimension(:,:)   :: exch_m               ! exchange coefficient for momentum
+        real, allocatable, dimension(:,:,:) :: exch_hx            ! exchange coefficient for heat
+        real, allocatable, dimension(:,:)   :: exch_h               ! exchange coefficient for heat
+        real, allocatable, dimension(:,:)   :: exch_q               ! exchange coefficient for moisture
+        integer, allocatable, dimension(:,:):: kpbl2d            ! Not clear yet what this does
+        real :: dtmin                                               ! dt in minutes
+        !real :: regime                                             ! stability
+        !regime
 
         ! current model time step length (should this be somewhere else?)
         real::dt

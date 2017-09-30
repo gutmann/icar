@@ -147,6 +147,97 @@ contains
         where(exchange_C < MIN_EXCHANGE_C) exchange_C=MIN_EXCHANGE_C
     end subroutine calc_exchange_coefficient
 
+!----- start new surface layer calculations introduced by Patrik Bohlinger -----!
+    subroutine calc_MO_sflayer_exch_coeff(wspd,wspd10,z_agl,znt,psim,psim10,psih,psih2m, &
+                                          ustar_new,thg,rho,th,exch_m,exch_h,exch_q,th2m, &
+                                          q2m,qv,skin_t,skin_t_C,es_weights,es,es_water,es_ice,qsg_sat,psfc)
+        implicit none
+        integer nx,ny,nz
+        real, dimension(:,:),intent(inout) :: wspd,z_agl,znt,psim,psim10,psih,psih2m,ustar_new,thg,skin_t,skin_t_C,es_weights,es,es_water,es_ice,qsg_sat,psfc
+        real, dimension(:,:,:),intent(inout) :: rho,th,qv
+        real, dimension(:,:),intent(inout) :: exch_m,exch_h,exch_q ! inout
+        real, dimension(:,:),intent(inout) :: wspd10, th2m, q2m ! inout
+
+        nx = size(z_agl,1)
+        ny = size(z_agl,2)
+
+        ! compute the dimensionless bulk coefficent for
+        ! momentum, heat and moisture
+        exch_m(2:nx-1,2:ny-1) = (karman**2) / (log(z_agl(2:nx-1,2:ny-1) / znt(2:nx-1,2:ny-1)) &
+                                        - psim(2:nx-1,2:ny-1))**2
+        exch_h(2:nx-1,2:ny-1) = (karman**2) / ((log(z_agl(2:nx-1,2:ny-1) / znt(2:nx-1,2:ny-1)) &
+                                        - psim(2:nx-1,2:ny-1)) * (log(z_agl(2:nx-1,2:ny-1)&
+                                        / znt(2:nx-1,2:ny-1)) - psih(2:nx-1,2:ny-1)))
+        exch_q(2:nx-1,2:ny-1) = (karman**2) / ((log(z_agl(2:nx-1,2:ny-1) / znt(2:nx-1,2:ny-1)) &
+                                        - psim(2:nx-1,2:ny-1)) &
+                                        * (log((karman * ustar_new(2:nx-1,2:ny-1)&
+                                        * z_agl(2:nx-1,2:ny-1) / XKA) + z_agl(2:nx-1,2:ny-1)/zl) &
+                                        - psih(2:nx-1,2:ny-1)))
+        ! psim at 10m and psih at 2m required
+        wspd10(2:nx-1,2:ny-1)    = wspd(2:nx-1,2:ny-1)*((log(10/znt(2:nx-1,2:ny-1))-psim10(2:nx-1,2:ny-1))&
+                                /(log(z_agl(2:nx-1,2:ny-1)/znt(2:nx-1,2:ny-1))-psim(2:nx-1,2:ny-1)))
+        ! thg should be properly calculated, right now computed in time_step
+        ! using t2m and exner fct pii
+        th2m(2:nx-1,2:ny-1)    = thg(2:nx-1,2:ny-1) + (th(2:nx-1,1,2:ny-1) - thg(2:nx-1,2:ny-1)) &
+                                * (log(2/znt(2:nx-1,2:ny-1))-psih2m(2:nx-1,2:ny-1)) &
+                                / (log(z_agl(2:nx-1,2:ny-1)/znt(2:nx-1,2:ny-1)) &
+                                - psih(2:nx-1,2:ny-1))
+
+        !! ----- Compute saturated specific humidity at the ground ----- !
+        !! Need input: sfc pressure and skin_t
+        !! Computations based on: Clausius_Clapeyron relation
+        !! using the equations given in World Meteorological Organization,
+        !! Guide to Meteorological Instruments and Methods of Observation,
+        !! Appendix 4B, WMO-No. 8 (CIMO Guide), Geneva 2008.
+
+        !! Computes saturation vapor pressure for the given temperature
+        !! Temperature in Celsius
+        skin_t_C(2:nx-1,2:ny-1) = skin_t(2:nx-1,2:ny-1) - SVPT0
+
+        !! Liquid water vapor pressure at saturation [hPa]
+        es_water(2:nx-1,2:ny-1) = 6.112 * exp((17.62*skin_t_C(2:nx-1,2:ny-1))/(skin_t_C(2:nx-1,2:ny-1)+243.12))
+
+        !! Ice water vapor pressure at saturation [hPa]
+        es_ice(2:nx-1,2:ny-1) = 6.112 * exp((22.46*skin_t_C(2:nx-1,2:ny-1))/(skin_t_C(2:nx-1,2:ny-1)+272.62))
+
+        !! Linear weight between water and ice saturation between
+        es_weights(2:nx-1,2:ny-1)= (skin_t_C(2:nx-1,2:ny-1) - skin_t_C_low) &
+                                 / (skin_t_C_high - skin_t_C_low)
+        where(skin_t_C>0.)
+            es_weights(2:nx-1,2:ny-1)=1.
+        elsewhere(skin_t_C<-20.)
+            es_weights(2:nx-1,2:ny-1)=0.
+        endwhere
+
+        !! Saturation vapor pressure
+        !! Between temp_C_low and temp_C_high a blended value over ice and water is
+        !! calculated.
+        es(2:nx-1,2:ny-1)=(es_weights(2:nx-1,2:ny-1)*es_water(2:nx-1,2:ny-1))+((1-es_weights(2:nx-1,2:ny-1))*es_ice(2:nx-1,2:ny-1))
+        !! hPa --> Pa
+        es(2:nx-1,2:ny-1)=es(2:nx-1,2:ny-1)*100
+        !!es_unit='Pa';
+
+        !!calculate specific humidity [kg/kg] from water vapor pressure [Pa]
+        qsg_sat(2:nx-1,2:ny-1)= (RD/RW)* es(2:nx-1,2:ny-1)/(psfc(2:nx-1,2:ny-1)-es(2:nx-1,2:ny-1))
+        !q_unit='kg/kg';
+        ! ----- Computation of saturated specific humidity finished ----- !
+
+        q2m(2:nx-1,2:ny-1)    = qsg_sat(2:nx-1,2:ny-1) &
+                                + (qv(2:nx-1,1,2:ny-1)-qsg_sat(2:nx-1,2:ny-1)) &
+                                * (log((karman * ustar_new(2:nx-1,2:ny-1)*2/XKA) &
+                                + 2/zl) &
+                                - psih2m(2:nx-1,2:ny-1)) &
+                                / (log((karman * ustar_new(2:nx-1,2:ny-1)*z_agl(2:nx-1,2:ny-1)/XKA) &
+                                + z_agl(2:nx-1,2:ny-1)/zl) &
+                                - psih(2:nx-1,2:ny-1))
+    end subroutine
+
+    !subroutine calc_revised_MO_sflayer_exch_coeff()
+    !    implicit none
+    !end subroutine
+
+!----- end new surface layer calculations introduced by Patrik Bohlinger -----!
+
 
 ! eqn A11 in Appendix A.2 of Chen et al 1997 (see below for reference)
     subroutine F2_formula(F2, z_atm, zo, Ri)
@@ -345,7 +436,11 @@ contains
 
         write(*,*) "Initializing LSM"
 
-        exchange_term = 1
+        if (options%physics%boundarylayer==kPBL_YSU) then
+                exchange_term = 3 ! should be "3", added method 3 for nonlocal similarity theory based calculations for the exchange coefficients
+        else
+                exchange_term = 1
+        endif
 
         ime=size(domain%th,1)
         jme=size(domain%th,3)
@@ -484,10 +579,19 @@ contains
             windspd=sqrt(domain%u10**2+domain%v10**2)
             if (exchange_term==1) then
                 call calc_exchange_coefficient(windspd,domain%skin_t,domain%T,CHS)
+                !CHS(2:nx-1,2:ny-1) = CHS(2:nx-1,2:ny-1) * domain%wspd(2:nx-1,2:ny-1)
             elseif (exchange_term==2) then
                 call calc_mahrt_holtslag_exchange_coefficient(windspd,domain%skin_t,domain%T,domain%znt,CHS)
+            elseif (exchange_term==3) then
+                call calc_MO_sflayer_exch_coeff(domain%wspd,domain%wspd10,domain%z_agl,domain%znt,&
+                                                domain%psim,domain%psim10,domain%psih,domain%psih2m,&
+                                                domain%ustar_new,domain%thg,domain%rho,domain%th,&
+                                                domain%exch_m,domain%exch_h,domain%exch_q,domain%th2m,&
+                                                domain%q2m,domain%qv,domain%skin_t,domain%skin_t_C,&
+                                                domain%es_weights,domain%es,domain%es_water,domain%es_ice,domain%qsg_sat,domain%psfc)
+                CHS(2:nx-1,2:ny-1) = domain%exch_h(2:nx-1,2:ny-1) !* domain%wspd(2:nx-1,2:ny-1)
             endif
-!             print*, CHS(128,103)
+            ! write(*,*) "CHS: ",MAXVAL(CHS), MINVAL(CHS)
 
             ! --------------------------------------------------
             ! First handle the open water surface options
