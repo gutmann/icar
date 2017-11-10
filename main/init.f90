@@ -31,6 +31,7 @@ module init
     use wind,                       only : init_winds
     use initialize_options,         only : init_options
     use mod_atm_utilities,          only : init_atm_utilities
+    use string,                     only : str
 
     implicit none
     private
@@ -724,7 +725,7 @@ contains
 
         ! remove n grid cells from all sides of the domain if requested
         if(options%buffer>0) then
-            write(*,*) "Removing ",options%buffer," gridcells from edges of domain"
+            write(*,*) "  Removing ",trim(str(options%buffer))," gridcells from edges of domain"
             call remove_edges(domain,options%buffer)
         endif
 
@@ -1086,7 +1087,7 @@ contains
         call init_domain(options,boundary%next_domain) !set up a domain to hold the forcing for the next time step
 
         ! create the geographic look up table used to calculate boundary forcing data
-        write(*,*) "Setting up domain geographic Look Up Tables"
+        write(*,*) "  Setting up domain geographic Look Up Tables"
         ! NOTE: these first two geoLUTs are for translating from the mass grid to the U/V grids
         ! These are only used once to translate the terrain to those grids.
         ! set up a look up table from low-res grid center to high-res u-offset coordinates
@@ -1154,7 +1155,7 @@ contains
         call destroy_lut(v_temp_geo)
         call destroy_lut(u_temp_geo)
 
-        write(*,*) "Setting up vertical interpolation Look Up Tables"
+        write(*,*) "  Setting up vertical interpolation Look Up Tables"
         ! generate the vertical inteprolateion look up tables for the u and v grids
         call vLUT(domain%u_geo,boundary%u_geo)
         call vLUT(domain%v_geo,boundary%v_geo)
