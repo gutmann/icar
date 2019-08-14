@@ -873,7 +873,11 @@ contains
         type(time_delta_t), intent(in) :: dt
         type(Time_type) :: t2
 
-        t2 = t1 ! set calendar startyear, etc.
+        ! set calendar startyear, etc.
+        t2%calendar = t1%calendar
+        t2%year_zero = t1%year_zero
+        t2%month_zero = t1%month_zero
+        t2%day_zero = t1%day_zero
 
         call t2%set(t1%mjd() + dt%days())
 
