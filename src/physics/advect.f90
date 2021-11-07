@@ -43,7 +43,7 @@ contains
         allocate(U_m     (nx-1,nz,ny  ))
         allocate(V_m     (nx,  nz,ny-1))
         allocate(W_m     (nx,  nz,ny  ))
-        allocate(lastqv_m(nx,  nz,ny  ))
+        if (allocated(domain%tend%qv_adv)) allocate(lastqv_m(nx,  nz,ny  )) ! only used to update advection tendencies
 
         !     if (.not.allocated(U_4cu_u)) then
         !         allocate(U_4cu_u(nx,  nz, ny))
@@ -166,15 +166,26 @@ contains
            !     q(2:nx-1,nz,i)     = q(2:nx-1,nz,i)     - (qin(2:nx-1,nz,i) * w(2:nx-1,nz,i)-f5(:,nz-1))      &
            !                          / rho(2:nx-1,nz,i) / dz(2:nx-1,nz,i)
            ! else
-               ! perform horizontal advection, from difference terms
-               q(2:nx-1,:,i)      = q(2:nx-1,:,i)       - ((f1(2:nx-1,:) - f1(1:nx-2,:)) + (f3 - f4)) /(dx*dz(2:nx-1,:,i)*jaco(2:nx-1,:,i))
-               ! then vertical (order doesn't matter because fluxes f1-6 are calculated before applying them)
-               ! add fluxes to middle layers
-               q(2:nx-1,2:nz-1,i) = q(2:nx-1,2:nz-1,i)  - (f5(:,2:nz-1) - f5(:,1:nz-2)) / (dz(2:nx-1,2:nz-1,i)*jaco(2:nx-1,2:nz-1,i))
-               ! add fluxes to bottom layer
-               q(2:nx-1,1,i)      = q(2:nx-1,1,i)       - f5(:,1) / (dz(2:nx-1,1,i)*jaco(2:nx-1,1,i))
-               ! add fluxes to top layer
-               q(2:nx-1,nz,i)     = q(2:nx-1,nz,i)      - (qin(2:nx-1,nz,i) * w(2:nx-1,nz,i) - f5(:,nz-1)) / (dz(2:nx-1,nz,i)*jaco(2:nx-1,nz,i))
+            ! perform horizontal advection, from difference terms
+            if (options%adv_options%metric_term) then
+                q(2:nx-1,:,i)      = q(2:nx-1,:,i)       - ((f1(2:nx-1,:) - f1(1:nx-2,:)) + (f3 - f4)) /(dx*dz(2:nx-1,:,i)*jaco(2:nx-1,:,i))
+                ! then vertical (order doesn't matter because fluxes f1-6 are calculated before applying them)
+                ! add fluxes to middle layers
+                q(2:nx-1,2:nz-1,i) = q(2:nx-1,2:nz-1,i)  - (f5(:,2:nz-1) - f5(:,1:nz-2)) / (dz(2:nx-1,2:nz-1,i)*jaco(2:nx-1,2:nz-1,i))
+                ! add fluxes to bottom layer
+                q(2:nx-1,1,i)      = q(2:nx-1,1,i)       - f5(:,1) / (dz(2:nx-1,1,i)*jaco(2:nx-1,1,i))
+                ! add fluxes to top layer
+                q(2:nx-1,nz,i)     = q(2:nx-1,nz,i)      - (qin(2:nx-1,nz,i) * w(2:nx-1,nz,i) - f5(:,nz-1)) / (dz(2:nx-1,nz,i)*jaco(2:nx-1,nz,i))
+            else
+                q(2:nx-1,:,i)      = q(2:nx-1,:,i)       - ((f1(2:nx-1,:) - f1(1:nx-2,:)) + (f3 - f4)) /(dx*dz(2:nx-1,:,i))
+                ! then vertical (order doesn't matter because fluxes f1-6 are calculated before applying them)
+                ! add fluxes to middle layers
+                q(2:nx-1,2:nz-1,i) = q(2:nx-1,2:nz-1,i)  - (f5(:,2:nz-1) - f5(:,1:nz-2)) / (dz(2:nx-1,2:nz-1,i))
+                ! add fluxes to bottom layer
+                q(2:nx-1,1,i)      = q(2:nx-1,1,i)       - f5(:,1) / (dz(2:nx-1,1,i))
+                ! add fluxes to top layer
+                q(2:nx-1,nz,i)     = q(2:nx-1,nz,i)      - (qin(2:nx-1,nz,i) * w(2:nx-1,nz,i) - f5(:,nz-1)) / (dz(2:nx-1,nz,i))
+            endif
            ! endif
         enddo
         !$omp end do
@@ -274,7 +285,7 @@ contains
     ! end subroutine advect_cu_winds
 
 
-    subroutine test_divergence(u, v, w, dz, dx, jaco_u, jaco_v, jaco_w, ims, ime, jms, jme, kms, kme)
+    subroutine test_divergence(u, v, w, dz, dx, jaco_u, jaco_v, jaco_w, ims, ime, jms, jme, kms, kme, options)
         implicit none
         real, intent(in) :: u(ims:ime+1,kms:kme,jms:jme), jaco_u(ims:ime+1,kms:kme,jms:jme)
         real, intent(in) :: v(ims:ime,kms:kme,jms:jme+1), jaco_v(ims:ime,kms:kme,jms:jme+1)
@@ -282,6 +293,7 @@ contains
         real, intent(in) :: dz(ims:ime,kms:kme,jms:jme)
         real, intent(in) :: dx
         integer, intent(in) :: ims, ime, jms, jme, kms, kme
+        type(options_t), intent(in) :: options
 
         real, allocatable :: du(:,:), dv(:,:), dzu(:,:,:), dzv(:,:,:)
         integer :: i,j,k
@@ -297,20 +309,37 @@ contains
         dzv(:,:,jms+1:jme) = (dz(:,:,jms+1:jme) + dz(:,:,jms:jme-1)) / 2
         dzu(ims+1:ime,:,:) = (dz(ims+1:ime,:,:) + dz(ims:ime-1,:,:)) / 2
 
-        do i=ims+1,ime-1
-            do j=jms+1,jme-1
-                do k=kms+1,kme
-                    dv(i,j) = (v(i,k,j+1) * jaco_v(i,k,j+1) - v(i,k,j) * jaco_v(i,k,j))/dx
-                    du(i,j) = (u(i+1,k,j) * jaco_u(i+1,k,j) - u(i,k,j) * jaco_u(i,k,j))/dx
+        if (options%adv_options%metric_term) then
+            do i=ims+1,ime-1
+                do j=jms+1,jme-1
+                    do k=kms+1,kme
+                        dv(i,j) = (v(i,k,j+1) * jaco_v(i,k,j+1) - v(i,k,j) * jaco_v(i,k,j))/dx
+                        du(i,j) = (u(i+1,k,j) * jaco_u(i+1,k,j) - u(i,k,j) * jaco_u(i,k,j))/dx
 
-                    if (abs(du(i,j) + dv(i,j) + (w(i,k,j)*jaco_w(i,k,j)-w(i,k-1,j)*jaco_w(i,k-1,j))/(dz(i,k,j))) > 1e-3) then
-                        print*, this_image(), i,j,k , abs(du(i,j) + dv(i,j) + (w(i,k,j)*jaco_w(i,k,j)-w(i,k-1,j)*jaco_w(i,k-1,j))/(dz(i,k,j)))
-                        print*, "Winds are not balanced on entry to advect"
-                        !error stop
-                    endif
+                        if (abs(du(i,j) + dv(i,j) + (w(i,k,j)*jaco_w(i,k,j)-w(i,k-1,j)*jaco_w(i,k-1,j))/(dz(i,k,j))) > 1e-3) then
+                            print*, this_image(), i,j,k , abs(du(i,j) + dv(i,j) + (w(i,k,j)*jaco_w(i,k,j)-w(i,k-1,j)*jaco_w(i,k-1,j))/(dz(i,k,j)))
+                            print*, "Winds are not balanced on entry to advect"
+                            !error stop
+                        endif
+                    enddo
                 enddo
             enddo
-        enddo
+        else
+            do i=ims+1,ime-1
+                do j=jms+1,jme-1
+                    do k=kms+1,kme
+                        dv(i,j) = (v(i,k,j+1) - v(i,k,j))/dx
+                        du(i,j) = (u(i+1,k,j) - u(i,k,j))/dx
+
+                        if (abs(du(i,j) + dv(i,j) + (w(i,k,j)-w(i,k-1,j))/(dz(i,k,j))) > 1e-3) then
+                            print*, this_image(), i,j,k , abs(du(i,j) + dv(i,j) + (w(i,k,j)-w(i,k-1,j))/(dz(i,k,j)))
+                            print*, "Winds are not balanced on entry to advect"
+                            !error stop
+                        endif
+                    enddo
+                enddo
+            enddo
+        endif
 
     end subroutine test_divergence
 
@@ -357,9 +386,15 @@ contains
                 ! W_m = (domain%w_cu + domain%w)                     * (dt/dx)
                 ! call rebalance_cu_winds(U_m,V_m,W_m)
             ! else
-                U_m = u(2:nx,:,:) * ((dz(1:nx-1,:,:)+dz(2:nx,:,:))/2 * dt) * jaco_u(2:nx,:,:)
-                V_m = v(:,:,2:ny) * ((dz(:,:,1:ny-1)+dz(:,:,2:ny))/2 * dt) * jaco_v(:,:,2:ny)
-                W_m = w * dt * jaco_w
+        U_m = u(2:nx,:,:) * ((dz(1:nx-1,:,:)+dz(2:nx,:,:))/2 * dt)
+        V_m = v(:,:,2:ny) * ((dz(:,:,1:ny-1)+dz(:,:,2:ny))/2 * dt)
+        W_m = w * dt
+
+        if (options%adv_options%metric_term) then
+            U_m = U_m * jaco_u(2:nx,:,:)
+            V_m = V_m * jaco_v(:,:,2:ny)
+            W_m = W_m * jaco_w
+        endif
             ! endif
         ! endif
 
@@ -413,12 +448,17 @@ contains
         call setup_advection_dz(domain, options, nx,ny,nz)
 
         ! calculate U,V,W normalized for dt/dx (dx**2 for density advection so we can skip a /dx in the actual advection code)
-        call setup_module_winds(domain%u%data_3d, domain%v%data_3d, domain%w%data_3d, domain%advection_dz, domain%dx, options, dt,domain%jacobian,domain%jacobian_u,domain%jacobian_v,domain%jacobian_w)
+        call setup_module_winds(domain%u%data_3d, domain%v%data_3d, domain%w%data_3d,                    &
+                                domain%advection_dz, domain%dx, options, dt,                             &
+                                domain%jacobian,domain%jacobian_u,domain%jacobian_v,domain%jacobian_w)
 
-        ! lastqv_m=domain%qv
+        if (allocated(domain%tend%qv_adv)) lastqv_m = domain%water_vapor%data_3d
 
         if (options%parameters%debug) then
-            call test_divergence(domain%u%data_3d, domain%v%data_3d, domain%w%data_3d, domain%advection_dz, domain%dx, domain%jacobian_u, domain%jacobian_v, domain%jacobian_w, domain%ims, domain%ime, domain%jms, domain%jme, domain%kms, domain%kme)
+            call test_divergence(domain%u%data_3d, domain%v%data_3d, domain%w%data_3d, domain%advection_dz, domain%dx, &
+                                 domain%jacobian_u, domain%jacobian_v, domain%jacobian_w,                              &
+                                 domain%ims, domain%ime, domain%jms, domain%jme, domain%kms, domain%kme,               &
+                                 options)
         endif
 
         if (options%vars_to_advect(kVARS%water_vapor)>0)                  call advect3d(domain%water_vapor%data_3d,             U_m,V_m,W_m, domain%density%data_3d, domain%advection_dz, domain%dx, nx,nz,ny, domain%jacobian, options)
@@ -437,8 +477,10 @@ contains
         !     call advect_cu_winds(domain, options, dt)
         ! endif
 
-        ! used in some physics routines
-        ! domain%tend%qv_adv = (domain%qv - lastqv_m) / dt
+        ! used in some physics routines (Tiedtke cumulus for example)
+        if (allocated(domain%tend%qv_adv)) then
+            domain%tend%qv_adv = (domain%water_vapor%data_3d - lastqv_m) / dt
+        endif
     end subroutine upwind
 
 end module adv_upwind

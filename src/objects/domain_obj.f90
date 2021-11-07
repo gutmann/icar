@@ -1068,24 +1068,34 @@ contains
 
         endif
 
-        if (allocated(temp)) deallocate(temp)
-        allocate(temp(this%ids:this%ide+1, this%kds:this%kde, this%jds:this%jde+1))
-        temp(this%ids,:,this%jds:this%jde) = global_jacobian(this%ids,:,this%jds:this%jde)
-        temp(this%ide+1,:,this%jds:this%jde) = global_jacobian(this%ide,:,this%jds:this%jde)
-        temp(this%ids+1:this%ide,:,this%jds:this%jde) = (global_jacobian(this%ids+1:this%ide,:,this%jds:this%jde) + &
-                                                             global_jacobian(this%ids:this%ide-1,:,this%jds:this%jde))/2
-        jacobian_u = temp(ims:ime+1,:,jms:jme)
+        if (options%adv_options%metric_term) then
+            if (allocated(temp)) deallocate(temp)
+            allocate(temp(this%ids:this%ide+1, this%kds:this%kde, this%jds:this%jde+1))
 
-        temp(this%ids:this%ide,:,this%jds) = global_jacobian(this%ids:this%ide,:,this%jds)
-        temp(this%ids:this%ide,:,this%jde+1) = global_jacobian(this%ids:this%ide,:,this%jde)
-        temp(this%ids:this%ide,:,this%jds+1:this%jde) = (global_jacobian(this%ids:this%ide,:,this%jds+1:this%jde) + &
-                                             global_jacobian(this%ids:this%ide,:,this%jds:this%jde-1))/2
-        jacobian_v = temp(ims:ime,:,jms:jme+1)
+            temp(this%ids,:,this%jds:this%jde) = global_jacobian(this%ids,:,this%jds:this%jde)
+            temp(this%ide+1,:,this%jds:this%jde) = global_jacobian(this%ide,:,this%jds:this%jde)
+            temp(this%ids+1:this%ide,:,this%jds:this%jde) = (global_jacobian(this%ids+1:this%ide,:,this%jds:this%jde) + &
+                                                                 global_jacobian(this%ids:this%ide-1,:,this%jds:this%jde))/2
+            jacobian_u = temp(ims:ime+1,:,jms:jme)
 
-        temp(this%ids:this%ide,this%kme,this%jds) = global_jacobian(this%ids:this%ide,this%kme,this%jds)
-        temp(this%ids:this%ide,this%kms:this%kme-1,this%jds:this%jde) = (global_jacobian(this%ids:this%ide,this%kms:this%kme-1,this%jds:this%jde) + &
-                                                                        global_jacobian(this%ids:this%ide,this%kms+1:this%kme,this%jds:this%jde))/2
-        jacobian_w = temp(ims:ime,:,jms:jme)
+            temp(this%ids:this%ide,:,this%jds) = global_jacobian(this%ids:this%ide,:,this%jds)
+            temp(this%ids:this%ide,:,this%jde+1) = global_jacobian(this%ids:this%ide,:,this%jde)
+            temp(this%ids:this%ide,:,this%jds+1:this%jde) = (global_jacobian(this%ids:this%ide,:,this%jds+1:this%jde) + &
+                                                 global_jacobian(this%ids:this%ide,:,this%jds:this%jde-1))/2
+            jacobian_v = temp(ims:ime,:,jms:jme+1)
+
+            temp(this%ids:this%ide,this%kme,this%jds) = global_jacobian(this%ids:this%ide,this%kme,this%jds)
+            temp(this%ids:this%ide,this%kms:this%kme-1,this%jds:this%jde) = (global_jacobian(this%ids:this%ide,this%kms:this%kme-1,this%jds:this%jde) + &
+                                                                            global_jacobian(this%ids:this%ide,this%kms+1:this%kme,this%jds:this%jde))/2
+            jacobian_w = temp(ims:ime,:,jms:jme)
+
+        ! although these terms won't be used in advection code if .not. metric_term, they are still used in balance_uvw
+        else
+            jacobian = 1
+            jacobian_u = 1
+            jacobian_v = 1
+            jacobian_w = 1
+        endif
 
         call setup_dzdxy(this, options)
 
