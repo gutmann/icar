@@ -1492,9 +1492,10 @@ contains
         logical :: boundary_buffer          ! apply some smoothing to the x and y boundaries in MPDATA
         logical :: flux_corrected_transport ! use the flux corrected transport option in MPDATA
         integer :: mpdata_order             ! MPDATA order of correction (e.g. 1st=upwind, 2nd=classic, 3rd=better)
+        logical :: metric_term              ! enable metric terms to account for grid during advection (and winds)
 
         ! define the namelist
-        namelist /adv_parameters/ boundary_buffer, flux_corrected_transport, mpdata_order
+        namelist /adv_parameters/ boundary_buffer, flux_corrected_transport, mpdata_order, metric_term
 
          ! because adv_options could be in a separate file
          if (options%parameters%use_adv_options) then
@@ -1508,6 +1509,7 @@ contains
         boundary_buffer = .False.
         flux_corrected_transport = .True.
         mpdata_order = 2
+        metric_term = .True.
 
         ! read the namelist options
         if (options%parameters%use_adv_options) then
@@ -1520,6 +1522,7 @@ contains
         adv_options%boundary_buffer = boundary_buffer
         adv_options%flux_corrected_transport = flux_corrected_transport
         adv_options%mpdata_order = mpdata_order
+        adv_options%metric_term = metric_term
 
         ! copy the data back into the global options data structure
         options%adv_options = adv_options

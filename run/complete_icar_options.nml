@@ -258,7 +258,6 @@
     qcvar   = "QCLOUD",     ! cloud water mixing ratio  [kg/kg]     OPTIONAL
     qrvar   = "QRAIN",      ! rain water mixing ratio   [kg/kg]     OPTIONAL
     qsvar   = "QSNOW",      ! snow mixing ratio         [kg/kg]     OPTIONAL
-    qnrvar  = "QNRAIN",     ! rain number concentration [kg^-1]     OPTIONAL
     qgvar   = "QGRAUP",     ! graupel mixing ratio      [kg/kg]     OPTIONAL
     qnivar  = "QNICE",      ! ice number concentration  [kg^-1]     OPTIONAL
     qivar   = "QICE",       ! cloud ice mixing ratio    [kg/kg]     OPTIONAL
@@ -390,6 +389,9 @@
     boundary_buffer = False         ! smooth a one grid cell buffer around the boundary
                                     ! to avoid ringing artifacts in non-flux-corrected advection
                                     ! better just to use flux correction as it may crash without it.
+
+    metric_term = True              ! enable metric terms to account for grid during advection (and winds)
+
 /
 
 !---------------------------------------------------------
