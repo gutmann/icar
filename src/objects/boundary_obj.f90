@@ -498,10 +498,12 @@ contains
         associate(list => this%variables)
 
         if (options%parameters%qv_is_relative_humidity) then
+            print*, "updating humidity from relative"
             call compute_mixing_ratio_from_rh(list, options)
         endif
 
         if (options%parameters%qv_is_spec_humidity) then
+            print*, "updating humidity from specific"
             call compute_mixing_ratio_from_sh(list, options)
         endif
 
@@ -570,7 +572,16 @@ contains
             qvar%data_3d = qvar%data_3d/100.0
         endif
 
+        if (options%parameters%t_is_potential) then
+            tvar%data_3d = tvar%data_3d * exner_function(pvar%data_3d)
+        endif
+
         qvar%data_3d = rh_to_mr(qvar%data_3d, tvar%data_3d, pvar%data_3d)
+
+        if (options%parameters%t_is_potential) then
+            tvar%data_3d = tvar%data_3d / exner_function(pvar%data_3d)
+        endif
+
 
     end subroutine compute_mixing_ratio_from_rh
 
