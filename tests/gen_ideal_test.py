@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from netCDF4 import Dataset
 import numpy as np
 import math
@@ -19,8 +21,8 @@ class IdealTest:
 
     def __init__(self, nz=10, nx=2, ny=2, n_hills=1.0):
         rh = 0.9
-        u_test_val = 0.5
-        v_test_val = 0.5
+        u_test_val = 5
+        v_test_val = 5
         w_test_val = 0.0
         water_vapor_test_val = 0.001
         theta_test_val = 300.0

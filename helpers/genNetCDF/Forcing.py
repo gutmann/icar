@@ -16,7 +16,7 @@ class Forcing:
     def __init__(self, nz=10, nx=2, ny=2, sealevel_pressure=100000.0,
                  rh=0.9, u_val=0.5, v_val=0.5, w_val=0.0,
                  water_vapor_val=0.001, theta_val=300.0, nt=2,
-                 height_value=500, dx=10, dy=10, dz_value=500.0):
+                 height_value=500, dx=2, dy=10, dz_value=500.0):
 
         self.setup_class_variables(nz, nx, ny, nt, sealevel_pressure)
 
@@ -32,8 +32,9 @@ class Forcing:
         # create longitude and latitude
         lat_tmp = np.zeros([nt, nx, ny])
         lon_tmp = np.zeros([nt, nx, ny])
-        lat_flat = np.arange(39,39+nx*dx, dx)
-        lon_flat = np.arange(-107,-107+ny*dy, dy)
+        print(dx, nx, ny)
+        lat_flat = np.arange(0,0+nx*dx, dx)
+        lon_flat = np.arange(-130,-130+ny*dy, dy)
 
         self.define_data_variables(nt, nz, nx, ny, height_value, lat_flat,
                                    lon_flat, dz_value)
@@ -114,21 +115,21 @@ class Forcing:
 
         # --- u variable
         self.u = xr.Variable(dims4d,
-                             np.full([nt, nz, nx, ny], 0.5),
+                             np.full([nt, nz, nx, ny], 5),
                              {'long_name':'U (E/W) wind speed', 'units':"m s**-1"})
         # --- v variable
         self.v = xr.Variable(dims4d,
-                             np.full([nt, nz, nx, ny], 0.25),
+                             np.full([nt, nz, nx, ny], 5),
                              {'long_name':'V (N/S) wind speed', 'units':"m s**-1"})
 
         # --- potential temperature variable
         self.theta = xr.Variable(dims4d,
-                                 np.full([nt, nz, nx, ny], 270.),
+                                 np.full([nt, nz, nx, ny], 290.),
                                  {'long_name':'Potential Temperature', 'units':"K"})
         # --- qv variable
         self.qv = xr.Variable(dims4d,
-                              np.full([nt, nz, nx, ny], 0.1),
-                              {'long_name':'Relative Humidity', 'units':"kg kg**-1"})
+                              np.full([nt, nz, nx, ny], 0.9),
+                              {'long_name':'Relative Humidity', 'units':" "})
         # --- height
         self.height = xr.Variable(dims2d,
                                   np.full([nx, ny], height_value),
@@ -150,15 +151,21 @@ class Forcing:
 
         # --- Pressure
         pressure_data = np.zeros([nt,nz,nx,ny])
-        for k in range(0,nz):
-            for i in range(0,nx):
-                for j in range(0,ny):
-                    pressure_data[:,k,i,j] = self.sealevel_pressure * \
-                        (1 - 2.25577E-5 * z_data[0,k,i,j])**5.25588
-                    self.pressure = xr.Variable(dims4d,
-                                                pressure_data,
-                                                {'long_name':'Pressure',
-                                                 'units':'Pa'})
+        # for k in range(0,nz):
+        #     for i in range(0,nx):
+        #         for j in range(0,ny):
+        #             pressure_data[:,k,i,j] = self.sealevel_pressure * \
+        #                 (1 - 2.25577E-5 * z_data[0,k,i,j])**5.25588
+        #             self.pressure = xr.Variable(dims4d,
+        #                                         pressure_data,
+        #                                         {'long_name':'Pressure',
+        #                                          'units':'Pa'})
+        pressure_data[:,:,:,:] = self.sealevel_pressure * \
+            (1 - 2.25577E-5 * z_data[:,:,:,:])**5.25588
+        self.pressure = xr.Variable(dims4d,
+                                    pressure_data,
+                                    {'long_name':'Pressure',
+                                     'units':'Pa'})
         del(pressure_data)
 
         # --- Latitude
