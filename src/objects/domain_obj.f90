@@ -1089,15 +1089,17 @@ contains
                                                                             global_jacobian(this%ids:this%ide,this%kms+1:this%kme,this%jds:this%jde))/2
             jacobian_w = temp(ims:ime,:,jms:jme)
 
-        ! although these terms won't be used in advection code if .not. metric_term, they are still used in balance_uvw
         else
+            ! although these terms won't be used in advection code if .not. metric_term, they are still used in balance_uvw
             jacobian = 1
             jacobian_u = 1
             jacobian_v = 1
             jacobian_w = 1
         endif
 
+
         call setup_dzdxy(this, options)
+
 
             ! technically these should probably be defined to the k+1 model top as well bu not used at present.
             ! z_interface(:,i,:) = z_interface(:,i-1,:) + dz_interface(:,i-1,:)
@@ -1155,6 +1157,7 @@ contains
         this%dzdx(:,:,:) = global_dzdx(this%ims:this%ime+1,:,this%jms:this%jme)
         this%dzdy(:,:,:) = global_dzdy(this%ims:this%ime,:,this%jms:this%jme+1)
 
+        print*, minval(this%dzdx), maxval(this%dzdx)
         deallocate(global_z)
         deallocate(global_dzdx)
         deallocate(global_dzdy)

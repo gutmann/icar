@@ -341,6 +341,7 @@ contains
             enddo
         endif
 
+        print*,"Winds appear to be balanced...?"
     end subroutine test_divergence
 
     subroutine setup_module_winds(u,v,w, dz, dx, options, dt,jaco,jaco_u,jaco_v, jaco_w)
