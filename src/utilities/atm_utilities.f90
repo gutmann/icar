@@ -732,6 +732,7 @@ contains
                         if (RH_00 .ge. 1.5) then
                             WRITE (*,*) ' FATAL: RH_00 too large (1.5): ', RH_00, RH_00L, tc
                         endif
+                        RH_00 = min(RH_00, 1.45)
                         CLDFRA(K) = MAX(0., 1.0-SQRT((1.5-RHUM)/(1.5-RH_00)))
                     else
    !..but for the GFS model, RH is way lower.
@@ -794,13 +795,13 @@ contains
         ENDDO
         if (k_m12C .le. kts) k_m12C = kts
 
-        if (k_m12C.gt.kte-3) then
-            WRITE (*,*) 'DEBUG-GT: WARNING, no possible way neg12C can occur this high up: ', k_m12C
-            do k = kte, kts, -1
-                WRITE (*,*) 'DEBUG-GT,  k,  P, T : ', k,P1d(k)*0.01,T1d(k)-273.15
-            enddo
-            write(*,*) ('FATAL ERROR, problem in temperature profile.')
-        endif
+        ! if (k_m12C.gt.kte-3) then
+        !     WRITE (*,*) 'DEBUG-GT: WARNING, no possible way neg12C can occur this high up: ', k_m12C
+        !     do k = kte, kts, -1
+        !         WRITE (*,*) 'DEBUG-GT,  k,  P, T : ', k,P1d(k)*0.01,T1d(k)-273.15
+        !     enddo
+        !     write(*,*) ('FATAL ERROR, problem in temperature profile.')
+        ! endif
 
        !..Find tropopause height, best surrogate, because we would not really
        !.. wish to put fake clouds into the stratosphere.  The 10/1500 ratio
