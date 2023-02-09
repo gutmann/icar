@@ -46,6 +46,9 @@ module land_surface
     use options_interface,   only : options_t
     use domain_interface,    only : domain_t
     use module_ra_simple, only: calc_solar_elevation
+    use debug_module,               only : domain_check
+    use string,                     only : str
+
     use ieee_arithmetic
 
     implicit none
@@ -358,7 +361,240 @@ contains
         !$omp end parallel
     end subroutine surface_diagnostics
 
-        subroutine apply_fluxes(domain,dt)
+    subroutine check_vars_post_lsm(domain)
+        implicit none
+        type(domain_t), intent(inout) :: domain
+
+        if (any(ieee_is_nan(domain%skin_temperature%data_2d))) print*, "error with skin_temperature"
+        if (any(ieee_is_nan(domain%sensible_heat%data_2d))) print*, "error with sensible_heat"
+        if (any(ieee_is_nan(domain%latent_heat%data_2d))) print*, "error with latent_heat"
+        if (any(ieee_is_nan(domain%ground_heat_flux%data_2d))) print*, "error with ground_heat_flux"
+        if (any(ieee_is_nan(domain%soil_totalmoisture%data_2d))) print*, "error with soil_totalmoisture"
+        if (any(ieee_is_nan(domain%soil_water_content%data_3d))) print*, "error with soil_water_content"
+        if (any(ieee_is_nan(domain%soil_temperature%data_3d))) print*, "error with soil_temperature"
+        if (any(ieee_is_nan(domain%snow_water_equivalent%data_2d))) print*, "error with snow_water_equivalent"
+        if (any(ieee_is_nan(domain%snow_height%data_2d))) print*, "error with snow_height"
+        if (any(ieee_is_nan(domain%canopy_water%data_2d))) print*, "error with canopy_water"
+        if (any(ieee_is_nan(domain%roughness_z0%data_2d))) print*, "error with roughness_z0"
+        if (any(ieee_is_nan(domain%irr_alloc_sprinkler%data_2d))) print*, "error with irr_alloc_sprinkler"
+        if (any(ieee_is_nan(domain%irr_alloc_micro%data_2d))) print*, "error with irr_alloc_micro"
+        if (any(ieee_is_nan(domain%irr_alloc_flood%data_2d))) print*, "error with irr_alloc_flood"
+        if (any(ieee_is_nan(domain%irr_evap_loss_sprinkler%data_2d))) print*, "error with irr_evap_loss_sprinkler"
+        if (any(ieee_is_nan(domain%irr_amt_sprinkler%data_2d))) print*, "error with irr_amt_sprinkler"
+        if (any(ieee_is_nan(domain%irr_amt_micro%data_2d))) print*, "error with irr_amt_micro"
+        if (any(ieee_is_nan(domain%irr_amt_flood%data_2d))) print*, "error with irr_amt_flood"
+        if (any(ieee_is_nan(domain%evap_heat_sprinkler%data_2d))) print*, "error with evap_heat_sprinkler"
+        if (any(ieee_is_nan(domain%veg_leaf_temperature%data_2d))) print*, "error with veg_leaf_temperature"
+        if (any(ieee_is_nan(domain%ground_surf_temperature%data_2d))) print*, "error with ground_surf_temperature"
+        if (any(ieee_is_nan(domain%canopy_water_ice%data_2d))) print*, "error with canopy_water_ice"
+        if (any(ieee_is_nan(domain%canopy_water_liquid%data_2d))) print*, "error with canopy_water_liquid"
+        if (any(ieee_is_nan(domain%canopy_vapor_pressure%data_2d))) print*, "error with canopy_vapor_pressure"
+        if (any(ieee_is_nan(domain%canopy_temperature%data_2d))) print*, "error with canopy_temperature"
+        if (any(ieee_is_nan(domain%coeff_momentum_drag%data_2d))) print*, "error with coeff_momentum_drag"
+        if (any(ieee_is_nan(domain%coeff_heat_exchange%data_2d))) print*, "error with coeff_heat_exchange"
+        if (any(ieee_is_nan(domain%canopy_fwet%data_2d))) print*, "error with canopy_fwet"
+        if (any(ieee_is_nan(domain%snow_water_eq_prev%data_2d))) print*, "error with snow_water_eq_prev"
+        if (any(ieee_is_nan(domain%snow_albedo_prev%data_2d))) print*, "error with snow_albedo_prev"
+        if (any(ieee_is_nan(domain%snowfall_ground%data_2d))) print*, "error with snowfall_ground"
+        if (any(ieee_is_nan(domain%rainfall_ground%data_2d))) print*, "error with rainfall_ground"
+        if (any(ieee_is_nan(domain%storage_lake%data_2d))) print*, "error with storage_lake"
+        if (any(ieee_is_nan(domain%water_table_depth%data_2d))) print*, "error with water_table_depth"
+        if (any(ieee_is_nan(domain%water_aquifer%data_2d))) print*, "error with water_aquifer"
+        if (any(ieee_is_nan(domain%storage_gw%data_2d))) print*, "error with storage_gw"
+        if (any(ieee_is_nan(domain%snow_temperature%data_3d))) print*, "error with snow_temperature"
+        if (any(ieee_is_nan(domain%snow_layer_depth%data_3d))) print*, "error with snow_layer_depth"
+        if (any(ieee_is_nan(domain%snow_layer_ice%data_3d))) print*, "error with snow_layer_ice"
+        if (any(ieee_is_nan(domain%snow_layer_liquid_water%data_3d))) print*, "error with snow_layer_liquid_water"
+        if (any(ieee_is_nan(domain%mass_leaf%data_2d))) print*, "error with mass_leaf"
+        if (any(ieee_is_nan(domain%mass_root%data_2d))) print*, "error with mass_root"
+        if (any(ieee_is_nan(domain%mass_stem%data_2d))) print*, "error with mass_stem"
+        if (any(ieee_is_nan(domain%mass_wood%data_2d))) print*, "error with mass_wood"
+        if (any(ieee_is_nan(domain%soil_carbon_stable%data_2d))) print*, "error with soil_carbon_stable"
+        if (any(ieee_is_nan(domain%soil_carbon_fast%data_2d))) print*, "error with soil_carbon_fast"
+        if (any(ieee_is_nan(domain%lai%data_2d))) print*, "error with lai"
+        if (any(ieee_is_nan(domain%sai%data_2d))) print*, "error with sai"
+        if (any(ieee_is_nan(domain%snow_age_factor%data_2d))) print*, "error with snow_age_factor"
+        if (any(ieee_is_nan(domain%eq_soil_moisture%data_3d))) print*, "error with eq_soil_moisture"
+        if (any(ieee_is_nan(domain%smc_watertable_deep%data_2d))) print*, "error with smc_watertable_deep"
+        if (any(ieee_is_nan(domain%recharge_deep%data_2d))) print*, "error with recharge_deep"
+        if (any(ieee_is_nan(domain%recharge%data_2d))) print*, "error with recharge"
+        if (any(ieee_is_nan(domain%mass_ag_grain%data_2d))) print*, "error with mass_ag_grain"
+        if (any(ieee_is_nan(domain%growing_degree_days%data_2d))) print*, "error with growing_degree_days"
+        if (any(ieee_is_nan(domain%gecros_state%data_3d))) print*, "error with gecros_state"
+        if (any(ieee_is_nan(domain%temperature_2m_veg%data_2d))) print*, "error with temperature_2m_veg"
+        if (any(ieee_is_nan(domain%temperature_2m_bare%data_2d))) print*, "error with temperature_2m_bare"
+        if (any(ieee_is_nan(domain%mixing_ratio_2m_veg%data_2d))) print*, "error with mixing_ratio_2m_veg"
+        if (any(ieee_is_nan(domain%mixing_ratio_2m_bare%data_2d))) print*, "error with mixing_ratio_2m_bare"
+        if (any(ieee_is_nan(domain%surface_rad_temperature%data_2d))) print*, "error with surface_rad_temperature"
+        if (any(ieee_is_nan(domain%net_ecosystem_exchange%data_2d))) print*, "error with net_ecosystem_exchange"
+        if (any(ieee_is_nan(domain%gross_primary_prod%data_2d))) print*, "error with gross_primary_prod"
+        if (any(ieee_is_nan(domain%net_primary_prod%data_2d))) print*, "error with net_primary_prod"
+        if (any(ieee_is_nan(domain%vegetation_fraction_out%data_2d))) print*, "error with vegetation_fraction_out"
+        if (any(ieee_is_nan(domain%runoff_surface%data_2d))) print*, "error with runoff_surface"
+        if (any(ieee_is_nan(domain%runoff_subsurface%data_2d))) print*, "error with runoff_subsurface"
+        if (any(ieee_is_nan(domain%evap_canopy%data_2d))) print*, "error with evap_canopy"
+        if (any(ieee_is_nan(domain%evap_soil_surface%data_2d))) print*, "error with evap_soil_surface"
+        if (any(ieee_is_nan(domain%transpiration_rate%data_2d))) print*, "error with transpiration_rate"
+        if (any(ieee_is_nan(domain%rad_absorbed_total%data_2d))) print*, "error with rad_absorbed_total"
+        if (any(ieee_is_nan(domain%rad_net_longwave%data_2d))) print*, "error with rad_net_longwave"
+        if (any(ieee_is_nan(domain%apar%data_2d))) print*, "error with apar"
+        if (any(ieee_is_nan(domain%photosynthesis_total%data_2d))) print*, "error with photosynthesis_total"
+        if (any(ieee_is_nan(domain%rad_absorbed_veg%data_2d))) print*, "error with rad_absorbed_veg"
+        if (any(ieee_is_nan(domain%rad_absorbed_bare%data_2d))) print*, "error with rad_absorbed_bare"
+        if (any(ieee_is_nan(domain%stomatal_resist_sun%data_2d))) print*, "error with stomatal_resist_sun"
+        if (any(ieee_is_nan(domain%stomatal_resist_shade%data_2d))) print*, "error with stomatal_resist_shade"
+        if (any(ieee_is_nan(domain%frac_between_gap%data_2d))) print*, "error with frac_between_gap"
+        if (any(ieee_is_nan(domain%frac_within_gap%data_2d))) print*, "error with frac_within_gap"
+        if (any(ieee_is_nan(domain%ground_temperature_canopy%data_2d))) print*, "error with ground_temperature_canopy"
+        if (any(ieee_is_nan(domain%ground_temperature_bare%data_2d))) print*, "error with ground_temperature_bare"
+        if (any(ieee_is_nan(domain%ch_veg%data_2d))) print*, "error with ch_veg"
+        if (any(ieee_is_nan(domain%ch_bare%data_2d))) print*, "error with ch_bare"
+        if (any(ieee_is_nan(domain%sensible_heat_veg%data_2d))) print*, "error with sensible_heat_veg"
+        if (any(ieee_is_nan(domain%sensible_heat_canopy%data_2d))) print*, "error with sensible_heat_canopy"
+        if (any(ieee_is_nan(domain%sensible_heat_bare%data_2d))) print*, "error with sensible_heat_bare"
+        if (any(ieee_is_nan(domain%evap_heat_veg%data_2d))) print*, "error with evap_heat_veg"
+        if (any(ieee_is_nan(domain%evap_heat_bare%data_2d))) print*, "error with evap_heat_bare"
+        if (any(ieee_is_nan(domain%ground_heat_veg%data_2d))) print*, "error with ground_heat_veg"
+        if (any(ieee_is_nan(domain%ground_heat_bare%data_2d))) print*, "error with ground_heat_bare"
+        if (any(ieee_is_nan(domain%net_longwave_veg%data_2d))) print*, "error with net_longwave_veg"
+        if (any(ieee_is_nan(domain%net_longwave_canopy%data_2d))) print*, "error with net_longwave_canopy"
+        if (any(ieee_is_nan(domain%net_longwave_bare%data_2d))) print*, "error with net_longwave_bare"
+        if (any(ieee_is_nan(domain%transpiration_heat%data_2d))) print*, "error with transpiration_heat"
+        if (any(ieee_is_nan(domain%evap_heat_canopy%data_2d))) print*, "error with evap_heat_canopy"
+        if (any(ieee_is_nan(domain%ch_leaf%data_2d))) print*, "error with ch_leaf"
+        if (any(ieee_is_nan(domain%ch_under_canopy%data_2d))) print*, "error with ch_under_canopy"
+        if (any(ieee_is_nan(domain%ch_veg_2m%data_2d))) print*, "error with ch_veg_2m"
+        if (any(ieee_is_nan(domain%ch_bare_2m%data_2d))) print*, "error with ch_bare_2m"
+        if (any(ieee_is_nan(domain%stomatal_resist_total%data_2d))) print*, "error with stomatal_resist_total"
+        if (any(ieee_is_nan(domain%soil_sand_and_clay%data_3d))) print*, "error with domain%soil_sand_and_clay%data_3d"
+        if (any(ieee_is_nan(domain%soil_texture_1%data_2d))) print*, "error with domain%soil_texture_1%data_2d"
+        if (any(ieee_is_nan(domain%soil_texture_2%data_2d))) print*, "error with domain%soil_texture_2%data_2d"
+        if (any(ieee_is_nan(domain%soil_texture_3%data_2d))) print*, "error with domain%soil_texture_3%data_2d"
+        if (any(ieee_is_nan(domain%soil_texture_4%data_2d))) print*, "error with domain%soil_texture_4%data_2d"
+        if (any(ieee_is_nan(domain%temperature%data_3d))) print*, "error with domain%temperature%data_3d"
+        if (any(ieee_is_nan(domain%water_vapor%data_3d))) print*, "error with domain%water_vapor%data_3d"
+        if (any(ieee_is_nan(domain%u_mass%data_3d))) print*, "error with domain%u_mass%data_3d"
+        if (any(ieee_is_nan(domain%v_mass%data_3d))) print*, "error with domain%v_mass%data_3d"
+        if (any(ieee_is_nan(domain%shortwave%data_2d))) print*, "error with domain%shortwave%data_2d"
+        if (any(ieee_is_nan(domain%shortwave_direct%data_2d))) print*, "error with domain%shortwave_direct%data_2d"
+        if (any(ieee_is_nan(domain%shortwave_diffuse%data_2d))) print*, "error with domain%shortwave_diffuse%data_2d"
+        if (any(ieee_is_nan(domain%longwave%data_2d))) print*, "error with domain%longwave%data_2d"
+        if (any(ieee_is_nan(domain%pressure_interface%data_3d))) print*, "error with domain%pressure_interface%data_3d"
+        if (any(ieee_is_nan(current_precipitation))) print*, "error with current_precipitation"
+        if (any(ieee_is_nan(SR))) print*, "error with SR"
+        if (any(ieee_is_nan(domain%irr_frac_total%data_2d))) print*, "error with domain%irr_frac_total%data_2d"
+        if (any(ieee_is_nan(domain%irr_frac_sprinkler%data_2d))) print*, "error with domain%irr_frac_sprinkler%data_2d"
+        if (any(ieee_is_nan(domain%irr_frac_micro%data_2d))) print*, "error with domain%irr_frac_micro%data_2d"
+        if (any(ieee_is_nan(domain%irr_frac_flood%data_2d))) print*, "error with domain%irr_frac_flood%data_2d"
+        if (any(ieee_is_nan(domain%skin_temperature%data_2d))) print*, "error with domain%skin_temperature%data_2d"
+        if (any(ieee_is_nan(domain%sensible_heat%data_2d))) print*, "error with domain%sensible_heat%data_2d"
+        if (any(ieee_is_nan(QFX))) print*, "error with QFX"
+        if (any(ieee_is_nan(domain%latent_heat%data_2d))) print*, "error with domain%latent_heat%data_2d"
+        if (any(ieee_is_nan(domain%ground_heat_flux%data_2d))) print*, "error with domain%ground_heat_flux%data_2d"
+        if (any(ieee_is_nan(SMSTAV))) print*, "error with SMSTAV"
+        if (any(ieee_is_nan(domain%soil_totalmoisture%data_2d))) print*, "error with domain%soil_totalmoisture%data_2d"
+        if (any(ieee_is_nan(SFCRUNOFF))) print*, "error with SFCRUNOFF"
+        if (any(ieee_is_nan(UDRUNOFF))) print*, "error with UDRUNOFF"
+        if (any(ieee_is_nan(ALBEDO))) print*, "error with ALBEDO"
+        if (any(ieee_is_nan(SNOWC))) print*, "error with SNOWC"
+        if (any(ieee_is_nan(domain%soil_water_content%data_3d))) print*, "error with domain%soil_water_content%data_3d"
+        if (any(ieee_is_nan(SH2O))) print*, "error with SH2O"
+        if (any(ieee_is_nan(domain%soil_temperature%data_3d))) print*, "error with domain%soil_temperature%data_3d"
+        if (any(ieee_is_nan(domain%snow_water_equivalent%data_2d))) print*, "error with domain%snow_water_equivalent%data_2d"
+        if (any(ieee_is_nan(domain%snow_height%data_2d))) print*, "error with domain%snow_height%data_2d"
+        if (any(ieee_is_nan(domain%canopy_water%data_2d))) print*, "error with domain%canopy_water%data_2d"
+        if (any(ieee_is_nan(ACSNOM))) print*, "error with ACSNOM"
+        if (any(ieee_is_nan(ACSNOW))) print*, "error with ACSNOW"
+        if (any(ieee_is_nan(EMISS))) print*, "error with EMISS"
+        if (any(ieee_is_nan(QSFC))) print*, "error with QSFC"
+        if (any(ieee_is_nan(Z0))) print*, "error with Z0"
+        if (any(ieee_is_nan(domain%roughness_z0%data_2d))) print*, "error with domain%roughness_z0%data_2d"
+
+        if (any(ieee_is_nan(domain%z_lake3d%data_3d))) print*, "lake error with domain%z_lake3d%data_3d"
+        if (any(ieee_is_nan(domain%dz_lake3d%data_3d))) print*, "lake error with domain%dz_lake3d%data_3d"
+        if (any(ieee_is_nan(domain%lakedepth2d%data_2d))) print*, "lake error with domain%lakedepth2d%data_2d"
+        if (any(ieee_is_nan(domain%watsat3d%data_3d))) print*, "lake error with domain%watsat3d%data_3d"
+        if (any(ieee_is_nan(domain%csol3d%data_3d))) print*, "lake error with domain%csol3d%data_3d"
+        if (any(ieee_is_nan(domain%tkmg3d%data_3d))) print*, "lake error with domain%tkmg3d%data_3d"
+        if (any(ieee_is_nan(domain%tkdry3d%data_3d))) print*, "lake error with domain%tkdry3d%data_3d"
+        if (any(ieee_is_nan(domain%tksatu3d%data_3d))) print*, "lake error with domain%tksatu3d%data_3d"
+        if (any(ieee_is_nan(domain%snow_water_equivalent%data_2d))) print*, "lake error with domain%snow_water_equivalent%data_2d"
+        if (any(ieee_is_nan(domain%snow_height%data_2d))) print*, "lake error with domain%snow_height%data_2d"
+        if (any(ieee_is_nan(domain%snl2d%data_2d))) print*, "lake error with domain%snl2d%data_2d"
+        if (any(ieee_is_nan(domain%z3d%data_3d))) print*, "lake error with domain%z3d%data_3d"
+        if (any(ieee_is_nan(domain%dz3d%data_3d))) print*, "lake error with domain%dz3d%data_3d"
+        if (any(ieee_is_nan(domain%zi3d%data_3d))) print*, "lake error with domain%zi3d%data_3d"
+        if (any(ieee_is_nan(domain%h2osoi_vol3d%data_3d))) print*, "lake error with domain%h2osoi_vol3d%data_3d"
+        if (any(ieee_is_nan(domain%h2osoi_liq3d%data_3d))) print*, "lake error with domain%h2osoi_liq3d%data_3d"
+        if (any(ieee_is_nan(domain%h2osoi_ice3d%data_3d))) print*, "lake error with domain%h2osoi_ice3d%data_3d"
+        if (any(ieee_is_nan(domain%t_grnd2d%data_2d))) print*, "lake error with domain%t_grnd2d%data_2d"
+        if (any(ieee_is_nan(domain%t_soisno3d%data_3d))) print*, "lake error with domain%t_soisno3d%data_3d"
+        if (any(ieee_is_nan(domain%t_lake3d%data_3d))) print*, "lake error with domain%t_lake3d%data_3d"
+        if (any(ieee_is_nan(domain%savedtke12d%data_2d))) print*, "lake error with domain%savedtke12d%data_2d"
+        if (any(ieee_is_nan(domain%lake_icefrac3d%data_3d))) print*, "lake error with domain%lake_icefrac3d%data_3d"
+        if (any(ieee_is_nan(domain%lakemask%data_2d))) print*, "lake error with domain%lakemask%data_2d"
+    end subroutine check_vars_post_lsm
+
+    subroutine fix_var(var, fix_value, name)
+        implicit none
+        real, intent(inout) :: var(:,:)
+        real, intent(in) :: fix_value
+        character(len=*), intent(in) :: name
+        integer :: n,i,j
+
+        if (any(ieee_is_nan(var))) then
+            n = COUNT(ieee_is_nan(var))
+
+            write(*,*) trim(name)//" has", n," NaN(s) "
+            if (n < 9) then
+                do j = lbound(var,2), ubound(var,2)
+                    do i = lbound(var,1), ubound(var,1)
+                        if (ieee_is_nan(var(i,j))) then
+                            print*, "NaN in ",i,j
+                            var(i,j) = fix_value
+                        endif
+
+                    enddo
+                enddo
+            else
+                print*, "Too many NaNs, stopping on image:", this_image()
+                error stop
+            endif
+
+        endif
+    end subroutine
+    subroutine fix_var3d(var, fix_value, name)
+        implicit none
+        real, intent(inout) :: var(:,:,:)
+        real, intent(in) :: fix_value
+        character(len=*), intent(in) :: name
+        integer :: n,i,j,k
+
+        if (any(ieee_is_nan(var))) then
+            n = COUNT(ieee_is_nan(var))
+
+            write(*,*) trim(name)//" has", n," NaN(s) "
+            if (n < 9) then
+                do k = lbound(var,3), ubound(var,3)
+                    do j = lbound(var,2), ubound(var,2)
+                        do i = lbound(var,1), ubound(var,1)
+                            if (ieee_is_nan(var(i,j,k))) then
+                                print*, "NaN in ",i,j,k
+                                var(i,j,k) = fix_value
+                            endif
+
+                        enddo
+                    enddo
+                enddo
+            else
+                print*, "Too many NaNs, stopping on image:", this_image()
+                error stop
+            endif
+
+        endif
+    end subroutine
+
+    subroutine apply_fluxes(domain,dt)
         ! add sensible and latent heat fluxes to the first atm level
         implicit none
         type(domain_t), intent(inout) :: domain
@@ -374,7 +610,14 @@ contains
                 if (layer_fraction < sfc_layer_thickness) nz=k
             end do
         end if
-
+        call domain_check(domain, "img: "//trim(str(this_image()))//" pre-apply fluxes", fix=.True.)
+        call fix_var3d(domain%t_soisno3d%data_3d, 273.15, "t_soisno3d")
+        call fix_var3d(domain%t_lake3d%data_3d, 273.15, "t_lake3d")
+        call fix_var(domain%ground_heat_flux%data_2d, 0.0, "sensible")
+        call fix_var(domain%sensible_heat%data_2d, 0.0, "sensible")
+        call fix_var(domain%latent_heat%data_2d, 0.0, "latent")
+        call fix_var(domain%skin_temperature%data_2d, 273.15, "skin2")
+        call check_vars_post_lsm(domain)
         associate(density       => domain%density%data_3d,             &
                   sensible_heat => domain%sensible_heat%data_2d,           &
                   latent_heat   => domain%latent_heat%data_2d,             &
@@ -419,7 +662,7 @@ contains
         where(qv < SMALL_QV) qv = SMALL_QV
 
         end associate
-
+        call domain_check(domain, "img: "//trim(str(this_image()))//" post-apply fluxes", fix=.True.)
     end subroutine apply_fluxes
 
     subroutine allocate_noah_data(num_soil_layers)
@@ -1502,6 +1745,7 @@ contains
                              ims,ime,  jms,jme,  kms,kme,              &
                              its,ite,  jts,jte,  kts,kte)
 
+            call check_vars_post_lsm(domain)
     !         TLE: OMITTING OPTIONAL PRECIP INPUTS FOR NOW
     !                         MP_RAINC, MP_RAINNC, MP_SHCV, MP_SNOW, MP_GRAUP, MP_HAIL     )
                 where(domain%snow_water_equivalent%data_2d > options%lsm_options%max_swe) domain%snow_water_equivalent%data_2d = options%lsm_options%max_swe
