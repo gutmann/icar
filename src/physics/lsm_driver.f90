@@ -566,7 +566,7 @@ contains
     subroutine fix_var3d(var, fix_value, name)
         implicit none
         real, intent(inout) :: var(:,:,:)
-        real, intent(in) :: fix_value
+        real, intent(in) :: fix_value(:)
         character(len=*), intent(in) :: name
         integer :: n,i,j,k
 
@@ -580,7 +580,7 @@ contains
                         do i = lbound(var,1), ubound(var,1)
                             if (ieee_is_nan(var(i,j,k))) then
                                 print*, "NaN in ",i,j,k
-                                var(i,j,k) = fix_value
+                                var(i,j,k) = fix_value(max(min(j,ubound(var,2)),lbound(var,2)))
                             endif
 
                         enddo
@@ -593,6 +593,15 @@ contains
 
         endif
     end subroutine
+
+    subroutine printidx(var, i, j, name)
+        implicit none
+        real :: var(:,:,:)
+        integer :: i,j
+        character(len=*) :: name
+        print*, name
+        print*, var(i,:,j)
+    end subroutine printidx
 
     subroutine apply_fluxes(domain,dt)
         ! add sensible and latent heat fluxes to the first atm level
@@ -610,9 +619,14 @@ contains
                 if (layer_fraction < sfc_layer_thickness) nz=k
             end do
         end if
+        ! if (this_image()==128) call printidx(domain%t_soisno3d%data_3d,  21, 18, "t_soisno3d")
+        ! if (this_image()==128) call printidx(domain%t_lake3d%data_3d,  21, 18, "t_lake3d")
         call domain_check(domain, "img: "//trim(str(this_image()))//" pre-apply fluxes", fix=.True.)
-        call fix_var3d(domain%t_soisno3d%data_3d, 273.15, "t_soisno3d")
-        call fix_var3d(domain%t_lake3d%data_3d, 273.15, "t_lake3d")
+        ! call fix_var3d(domain%t_soisno3d%data_3d, 273.15, "t_soisno3d")
+        ! call fix_var3d(domain%t_lake3d%data_3d, 273.15, "t_lake3d")
+        call fix_var3d(domain%t_soisno3d%data_3d, [252.04, 269.94, 271.57, 271.58, 273.15, 277.00, 277.00, 277.00, 277.00], "t_soisno3d")
+        call fix_var3d(domain%t_lake3d%data_3d, [273.160, 275.536, 276.733, 276.746, 276.793, 276.838, 276.850, 276.980, 276.990, 276.997], "t_lake3d")
+
         call fix_var(domain%ground_heat_flux%data_2d, 0.0, "sensible")
         call fix_var(domain%sensible_heat%data_2d, 0.0, "sensible")
         call fix_var(domain%latent_heat%data_2d, 0.0, "latent")
