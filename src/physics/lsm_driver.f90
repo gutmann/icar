@@ -574,7 +574,7 @@ contains
             n = COUNT(ieee_is_nan(var))
 
             write(*,*) trim(name)//" has", n," NaN(s) "
-            if (n < 9) then
+            if (n < 30) then
                 do k = lbound(var,3), ubound(var,3)
                     do j = lbound(var,2), ubound(var,2)
                         do i = lbound(var,1), ubound(var,1)
