@@ -605,10 +605,11 @@ contains
         allocate(rain_bucket(ims:ime,jms:jme))
         rain_bucket = domain%precipitation_bucket  ! used to store last time step accumulated precip so that it can be subtracted from the current step
 
-
-        ! initial guesses (not needed?)
-        domain%temperature_2m%data_2d = domain%temperature%data_3d(:,kms,:)
-        domain%humidity_2m%data_2d = domain%water_vapor%data_3d(:,kms,:)
+        ! initial guesses (not needed for restarts)
+        if (.not.options%parameters%restart) then
+           domain%temperature_2m%data_2d = domain%temperature%data_3d(:,kms,:)
+           domain%humidity_2m%data_2d = domain%water_vapor%data_3d(:,kms,:)
+        endif
 
         if (options%physics%landsurface==kLSM_SIMPLE) then
             write(*,*) "    Simple LSM (may not work?)"
