@@ -401,6 +401,9 @@ contains
                     ny = size(data3d, 2)
                     nz = size(data3d, 3)
 
+                    if (trim(name) == trim(options%parameters%qvvar) )then
+                        where(data3d<1e-10) data3d = 1e-10
+                    endif
                     ! need to vinterp this dataset to the original vertical levels (if necessary)
 
                     var%data_3d(:,:,:) = reshape(data3d, shape=[nx,nz,ny], order=[1,3,2])
