@@ -171,10 +171,11 @@ CONTAINS
              END DO
              if (this_image()==1) print*,"CLWRF read:",idata-1, " lines"
 
-             IF (istatus /= -1) THEN
-                PRINT *,'CLWRF -- clwrf -- CLWRF ALERT!'
-                PRINT *,"   Not normal ending of 'CAMtr_volume_mixing_ratio' file"
-                PRINT *,"   Lecture ends with 'IOSTAT'=",istatus
+             ! gnu, intel? and cray end of file error status?
+             IF ((istatus /= -1).and.(istatus/=-4001))  THEN
+                if (this_image()==1) PRINT *,'CLWRF -- clwrf -- CLWRF ALERT!'
+                if (this_image()==1) PRINT *,"   Not normal ending of 'CAMtr_volume_mixing_ratio' file"
+                if (this_image()==1) PRINT *,"   Lecture ends with 'IOSTAT'=",istatus
              END IF
              max_years = idata - 1
              CLOSE(iunit)
