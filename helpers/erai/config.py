@@ -53,7 +53,7 @@ def set_bounds(info):
 def make_timelist(info):
     hrs=6.0
     dt=datetime.timedelta(hrs/24)
-    info.ntimes=np.int(np.round((info.end_date-info.start_date).total_seconds()/60./60./hrs))
+    info.ntimes=int(np.round((info.end_date-info.start_date).total_seconds()/60./60./hrs))
     info.times=[info.start_date+dt*i for i in range(info.ntimes)]
 
 def update_info(info):
@@ -70,7 +70,7 @@ def parse():
     parser.add_argument('lat_s',    nargs="?",     action='store',  help="southern latitude boundary",         default="20")
     parser.add_argument('lon_e',    nargs="?",     action='store',  help="eastern longitude boundary",         default="-50")
     parser.add_argument('lon_w',    nargs="?",     action='store',  help="western longitude boundary",         default="-140")
-    parser.add_argument('dir',      nargs="?",     action='store',  help="ERAi file location",                 default="/glade/collections/rda/data/ds627.0/")
+    parser.add_argument('dir',      nargs="?",     action='store',  help="ERAi file location",                 default="/glade/campaign/collections/rda/data/ds627.0/")
     parser.add_argument('atmdir',   nargs="?",     action='store',  help="ERAi atmospheric data file location",default="ei.oper.an.ml/_Y__M_/")
     parser.add_argument('sfcdir',   nargs="?",     action='store',  help="ERAi surface data file location",    default="ei.oper.fc.sfc/_Y__M_/")
     parser.add_argument('atmfile',  nargs="?",     action='store',  help="ERAi primary atmospheric file",      default="ei.oper.an.ml.regn128sc._Y__M__D__h_")
