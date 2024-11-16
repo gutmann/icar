@@ -594,14 +594,6 @@ contains
         endif
     end subroutine
 
-    subroutine printidx(var, i, j, name)
-        implicit none
-        real :: var(:,:,:)
-        integer :: i,j
-        character(len=*) :: name
-        print*, name
-        print*, var(i,:,j)
-    end subroutine printidx
 
     subroutine apply_fluxes(domain,dt)
         ! add sensible and latent heat fluxes to the first atm level
@@ -619,19 +611,19 @@ contains
                 if (layer_fraction < sfc_layer_thickness) nz=k
             end do
         end if
-        ! if (this_image()==128) call printidx(domain%t_soisno3d%data_3d,  21, 18, "t_soisno3d")
-        ! if (this_image()==128) call printidx(domain%t_lake3d%data_3d,  21, 18, "t_lake3d")
-        call domain_check(domain, "img: "//trim(str(this_image()))//" pre-apply fluxes", fix=.True.)
-        ! call fix_var3d(domain%t_soisno3d%data_3d, 273.15, "t_soisno3d")
-        ! call fix_var3d(domain%t_lake3d%data_3d, 273.15, "t_lake3d")
-        call fix_var3d(domain%t_soisno3d%data_3d, [252.04, 269.94, 271.57, 271.58, 273.15, 277.00, 277.00, 277.00, 277.00], "t_soisno3d")
-        call fix_var3d(domain%t_lake3d%data_3d, [273.160, 275.536, 276.733, 276.746, 276.793, 276.838, 276.850, 276.980, 276.990, 276.997], "t_lake3d")
 
-        call fix_var(domain%ground_heat_flux%data_2d, 0.0, "sensible")
-        call fix_var(domain%sensible_heat%data_2d, 0.0, "sensible")
-        call fix_var(domain%latent_heat%data_2d, 0.0, "latent")
-        call fix_var(domain%skin_temperature%data_2d, 273.15, "skin2")
-        call check_vars_post_lsm(domain)
+        ! helpful debugging tools.  uncomment to verify validity of data, warning, assumes lake and NoahMP are both turned on?
+        ! call domain_check(domain, "img: "//trim(str(this_image()))//" pre-apply fluxes", fix=.True.)
+        ! ! call fix_var3d(domain%t_soisno3d%data_3d, 273.15, "t_soisno3d")
+        ! ! call fix_var3d(domain%t_lake3d%data_3d, 273.15, "t_lake3d")
+        ! call fix_var3d(domain%t_soisno3d%data_3d, [252.04, 269.94, 271.57, 271.58, 273.15, 277.00, 277.00, 277.00, 277.00], "t_soisno3d")
+        ! call fix_var3d(domain%t_lake3d%data_3d, [273.160, 275.536, 276.733, 276.746, 276.793, 276.838, 276.850, 276.980, 276.990, 276.997], "t_lake3d")
+
+        ! call fix_var(domain%ground_heat_flux%data_2d, 0.0, "sensible")
+        ! call fix_var(domain%sensible_heat%data_2d, 0.0, "sensible")
+        ! call fix_var(domain%latent_heat%data_2d, 0.0, "latent")
+        ! call fix_var(domain%skin_temperature%data_2d, 273.15, "skin2")
+        ! call check_vars_post_lsm(domain)
         associate(density       => domain%density%data_3d,             &
                   sensible_heat => domain%sensible_heat%data_2d,           &
                   latent_heat   => domain%latent_heat%data_2d,             &
@@ -676,7 +668,7 @@ contains
         where(qv < SMALL_QV) qv = SMALL_QV
 
         end associate
-        call domain_check(domain, "img: "//trim(str(this_image()))//" post-apply fluxes", fix=.True.)
+        ! call domain_check(domain, "img: "//trim(str(this_image()))//" post-apply fluxes", fix=.True.)
     end subroutine apply_fluxes
 
     subroutine allocate_noah_data(num_soil_layers)
@@ -879,13 +871,6 @@ contains
 
             num_soil_layers=4  ! Make namelist argument maybe?
 
-            ! if (this_image()==1) then
-            !     write(*,*) "    options%parameters%external_files: ", trim(options%parameters%external_files)
-            !     write(*,*) "    options%parameters%restart: ", options%parameters%restart
-            !     write(*,*) "    options%parameters%rho_snow_ext ", trim(options%parameters%rho_snow_ext)
-            !     write(*,*) "    options%parameters%swe_ext ", trim(options%parameters%swe_ext )
-            ! endif
-
             if (options%parameters%rho_snow_ext /="" .AND. options%parameters%swe_ext /="") then ! calculate snowheight from external swe and density, but only if both are provided. (Swe alone will give FNDSNW = F)
                 FNDSNOWH = .True.
                 if (this_image()==1) write(*,*) "    Find snow height in file i.s.o. calculating them from SWE: FNDSNOWH=", FNDSNOWH
@@ -973,13 +958,6 @@ contains
             if (this_image()==1) write(*,*) "    Noah-MP LSM"
 
             num_soil_layers=4 ! to .nml?
-
-            ! if (this_image()==1) then
-            !     write(*,*) "    options%parameters%external_files: ", trim(options%parameters%external_files)
-            !     write(*,*) "    options%parameters%restart: ", options%parameters%restart
-            !     write(*,*) "    options%parameters%rho_snow_ext ", trim(options%parameters%rho_snow_ext)
-            !     write(*,*) "    options%parameters%swe_ext ", trim(options%parameters%swe_ext )
-            ! endif
 
             if (options%parameters%rho_snow_ext /="" .AND. options%parameters%swe_ext /="") then ! calculate snowheight from external swe and density, but only if both are provided. (Swe alone will give FNDSNW = F)
                 FNDSNOWH = .True.
@@ -1280,8 +1258,6 @@ contains
             lsm_dt = domain%model_time%seconds() - last_model_time
             last_model_time = domain%model_time%seconds()
 
-            ! if (this_image()==1) write(*,*) "    lsm start: snow_water_equivalent max:", MAXVAL(domain%snow_water_equivalent%data_2d)
-
             ! exchange coefficients
             windspd = sqrt(domain%u_10m%data_2d**2 + domain%v_10m%data_2d**2)
             if (exchange_term==1) then
@@ -1455,13 +1431,6 @@ contains
                     endif
                 endif
 
-                ! if (this_image()==1) write(*,*) "    lsm start: accumulated_precipitation max:", MAXVAL(domain%accumulated_precipitation%data_2dd)
-                ! if (this_image()==1) write(*,*) "    lsm start: RAINBL max:", MAXVAL(RAINBL)
-                ! if (this_image()==1) write(*,*) "    lsm start: domain%precipitation_bucket max:", MAXVAL(domain%precipitation_bucket)
-                ! if (this_image()==1) write(*,*) "    lsm start: rain_bucket max:", MAXVAL(rain_bucket)
-
-
-                ! RAINBL(i,j) = [kg m-2]   RAINBL = domain%accumulated_precipitation%data_2dd  ! used to store last time step accumulated precip so that it can be subtracted from the current step
                 current_precipitation = (domain%accumulated_precipitation%data_2dd - RAINBL) !+(domain%precipitation_bucket-rain_bucket)*kPRECIP_BUCKET_SIZE
                 if (allocated(domain%rain_fraction)) current_precipitation = current_precipitation * domain%rain_fraction(:,:,domain%model_time%get_month())
 
@@ -1574,19 +1543,9 @@ contains
                 !more parameters
                 landuse_name = options%lsm_options%LU_Categories            !test whether this works or if we need something separate
 
-                ! if (this_image()==1) write(*,*) "    lsm start: accumulated_precipitation max:", MAXVAL(domain%accumulated_precipitation%data_2d)
-                ! if (this_image()==1) write(*,*) "    lsm start: RAINBL max:", MAXVAL(RAINBL)
-                ! if (this_image()==1) write(*,*) "    lsm start: domain%precipitation_bucket max:", MAXVAL(domain%precipitation_bucket)
-                ! if (this_image()==1) write(*,*) "    lsm start: rain_bucket max:", MAXVAL(rain_bucket)
 
                 current_precipitation = (domain%accumulated_precipitation%data_2dd - RAINBL) !+(domain%precipitation_bucket-rain_bucket)*kPRECIP_BUCKET_SIZE
                 if (allocated(domain%rain_fraction)) current_precipitation = current_precipitation * domain%rain_fraction(:,:,domain%model_time%get_month())
-
-!                do I = ims,ime
-!                  do J = jms,jme
-!                    call calc_declin(domain%model_time%day_of_year(),real(domain%model_time%hour),real(domain%model_time%minute),real(domain%model_time%second),domain%latitude%data_2d(I,J),domain%longitude%data_2d(I,J),domain%cos_zenith%data_2d(I,J))
-!                  enddo
-!                enddo
 
 
                 do j = jms,jme
@@ -1760,7 +1719,7 @@ contains
                              ims,ime,  jms,jme,  kms,kme,              &
                              its,ite,  jts,jte,  kts,kte)
 
-            call check_vars_post_lsm(domain)
+            ! call check_vars_post_lsm(domain)
     !         TLE: OMITTING OPTIONAL PRECIP INPUTS FOR NOW
     !                         MP_RAINC, MP_RAINNC, MP_SHCV, MP_SNOW, MP_GRAUP, MP_HAIL     )
                 where(domain%snow_water_equivalent%data_2d > options%lsm_options%max_swe) domain%snow_water_equivalent%data_2d = options%lsm_options%max_swe
