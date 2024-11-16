@@ -104,8 +104,6 @@ contains
 
             if (this_image()==1 .AND. options%physics%windtype==kCONSERVE_MASS) then
                 write(*,*) "Using the difference between hi- and lo-res terrain  for horizontal wind acceleration "
-            ! elseif (this_image()==1) then
-            !     write(*,*) "using the difference between hi- and lo-res terrain for u/v components of w_real "
             endif
 
             call domain%calculate_delta_terrain(boundary, options)
@@ -118,8 +116,6 @@ contains
 
         ! initialize the atmospheric helper utilities
         call init_atm_utilities(options)
-
-        ! call init_physics(options, domain)
 
         call setup_bias_correction(options,domain)
 
