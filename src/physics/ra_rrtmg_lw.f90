@@ -2392,7 +2392,11 @@ contains
 ! Must use pmid from bottom four layers.
          do i=1,ncol
             if (pmid(i,1).lt.pmid(i,2)) then
-               write(*,*) 'WARNING: MCICA_SUBCOL: KISSVEC SEED GENERATOR REQUIRES PMID FROM BOTTOM FOUR LAYERS.'
+               print*, this_image(), ' WARNING: MCICA_SUBCOL: KISSVEC SEED GENERATOR REQUIRES PMID FROM BOTTOM FOUR LAYERS.'
+               print*, " low pressures below high pressures"
+               if (pmid(i,1).lt.(pmid(i,2)-500)) then
+                  stop 'MCICA_SUBCOL: KISSVEC SEED GENERATOR REQUIRES PMID FROM BOTTOM FOUR LAYERS.'
+               endif
             endif
             seed1(i) = (pmid(i,1) - int(pmid(i,1)))  * 1000000000_im
             seed2(i) = (pmid(i,2) - int(pmid(i,2)))  * 1000000000_im
