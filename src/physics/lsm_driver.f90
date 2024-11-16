@@ -1169,7 +1169,6 @@ contains
                     END DO
                 END DO
             endif
-            ! if(options%parameters%debug) write(*,*)"   ",lake_count, " lake cells in image ", this_image()
 
             ! setlake_depth_flag and use_lakedepth flag. (They seem to be redundant, but whatever):
             if( associated(domain%lake_depth%data_2d) ) then
@@ -1270,6 +1269,7 @@ contains
             ! First handle the open water surface options
             ! --------------------------------------------------
             ! if (options%physics%watersurface==kWATER_BASIC) then
+                ! write(*,*) "WARNING: Water Basic option has been disabled"
                 ! Note, do nothing because QFX and QSFC are only used for to calculate diagnostic
                 !    T2m and Q2m.  However, the fluxes and stability terms are not coordinated, so
                 !    This leads to problems in the current formulation and this has been removed.
