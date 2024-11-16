@@ -42,7 +42,7 @@ module land_surface
     use mod_atm_utilities,   only : sat_mr, calc_Richardson_nr
     use time_object,         only : Time_type
     use data_structures
-    use icar_constants,      only : kVARS, kLSM_SIMPLE, kLSM_NOAH, kLSM_NOAHMP
+    use icar_constants,      only : kVARS, kLSM_SIMPLE, kLSM_NOAH, kLSM_NOAHMP, MAXVARLENGTH
     use options_interface,   only : options_t
     use domain_interface,    only : domain_t
     use module_ra_simple, only: calc_solar_elevation
@@ -269,13 +269,13 @@ contains
 
 
 ! eqn A11 in Appendix A.2 of Chen et al 1997 (see below for reference)
-    subroutine F2_formula(F2, z_atm, zo, Ri)
-        real, dimension(:,:), intent(inout) :: F2, z_atm, zo, Ri
+    subroutine F2_formula(F2, z_atm_F2, zo, Ri_F2)
+        real, dimension(:,:), intent(inout) :: F2, z_atm_F2, zo, Ri_F2
 
         ! for the stable case from Mahrt (1987)
-        where(Ri>=0) F2=exp(-Ri)
+        where(Ri_F2>=0) F2=exp(-Ri_F2)
         ! for the unstable case from Holtslag and Beljaars (1989)
-        where(Ri<0)  F2=(1-(15*Ri)/(1+((70.5*karman**2 * sqrt(-Ri * z_atm/zo))/(lnz_atm_term**2))) )
+        where(Ri_F2<0)  F2=(1-(15*Ri_F2)/(1+((70.5*karman**2 * sqrt(-Ri_F2 * z_atm_F2/zo))/(lnz_atm_term**2))) )
 
     end subroutine F2_formula
 !From Appendix A.2 in Chen et al 1997
@@ -299,19 +299,19 @@ contains
         where(exchange_C < MIN_EXCHANGE_C) exchange_C=MIN_EXCHANGE_C
     end subroutine calc_mahrt_holtslag_exchange_coefficient
 
-    subroutine surface_diagnostics(HFX, QFX, TSK, QSFC, CHS2, CQS2,T2, Q2, PSFC, &
-                                    VEGFRAC, veg_type, land_mask, T2veg, T2bare, Q2veg, Q2bare)
+    subroutine surface_diagnostics(HFX, QFX_sd, TSK, QSFC_sd, CHS2_sd, CQS2_sd,T2, Q2, PSFC, &
+                                    VEGFRAC_sd, veg_type, land_mask, T2veg, T2bare, Q2veg, Q2bare)
         ! taken almost directly / exactly from WRF's module_sf_sfcdiags.F
         !-- HFX           net upward heat flux at the surface (W/m^2)
-        !-- QFX           net upward moisture flux at the surface (kg/m^2/s)
+        !-- QFX_sd           net upward moisture flux at the surface (kg/m^2/s)
         !-- TSK           surface temperature (K)
         !-- qsfc          specific humidity at lower boundary (kg/kg)
         implicit none
-        REAL, DIMENSION(ims:ime, jms:jme ), INTENT(IN)    ::  HFX, QFX, TSK, QSFC
+        REAL, DIMENSION(ims:ime, jms:jme ), INTENT(IN)    ::  HFX, QFX_sd, TSK, QSFC_sd
         REAL, DIMENSION(ims:ime, jms:jme ), INTENT(INOUT) ::  Q2, T2
-        REAL, DIMENSION(ims:ime, jms:jme ), INTENT(IN)    ::  PSFC, CHS2, CQS2
+        REAL, DIMENSION(ims:ime, jms:jme ), INTENT(IN)    ::  PSFC, CHS2_sd, CQS2_sd
         REAL, DIMENSION( : , : ),  POINTER, INTENT(IN)    ::  T2veg, T2bare, Q2veg, Q2bare
-        REAL, DIMENSION(ims:ime, jms:jme ), INTENT(IN)    ::  VEGFRAC
+        REAL, DIMENSION(ims:ime, jms:jme ), INTENT(IN)    ::  VEGFRAC_sd
         INTEGER, DIMENSION(ims:ime, jms:jme ), INTENT(IN) ::  land_mask, veg_type
         integer :: i,j
         real :: rho
@@ -324,10 +324,10 @@ contains
                 ! if ((domain%veg_type(i,j)/=13).and.(domain%veg_type(i,j)/=15).and.(domain%veg_type(i,j)/=16).and.(domain%veg_type(i,j)/=21)) then
                 ! over glacier, urban and barren, noahmp veg 2m T is 0 or -9999e35
                 if ((T2veg(i,j) > 200).and.(land_mask(i,j)==kLC_LAND).and.(associated(T2bare))) then
-                    T2(i,j) = VEGFRAC(i,j) * T2veg(i,j) &
-                        + (1-VEGFRAC(i,j)) * T2bare(i,j)
-                    Q2(i,j) = VEGFRAC(i,j) * Q2veg(i,j) &
-                        + (1-VEGFRAC(i,j)) * Q2bare(i,j)
+                    T2(i,j) = VEGFRAC_sd(i,j) * T2veg(i,j) &
+                        + (1-VEGFRAC_sd(i,j)) * T2bare(i,j)
+                    Q2(i,j) = VEGFRAC_sd(i,j) * Q2veg(i,j) &
+                        + (1-VEGFRAC_sd(i,j)) * Q2bare(i,j)
                 else
                     ! over glacier we don't want to use the bare ground temperature though
                     if ((veg_type(i,j)/=ISICE)           &  ! was /=15  (15=snow/ice in MODIFIED_IGBP_MODIS_NOAH)
@@ -339,16 +339,16 @@ contains
                     else
                         RHO = PSFC(I,J)/(Rd * TSK(I,J))
 
-                        if(CQS2(I,J).lt.1.E-3) then
-                           Q2(I,J) = QSFC(I,J)
+                        if(CQS2_sd(I,J).lt.1.E-3) then
+                           Q2(I,J) = QSFC_sd(I,J)
                         else
-                           Q2(I,J) = QSFC(I,J) - QFX(I,J)/(RHO*CQS2(I,J))
+                           Q2(I,J) = QSFC_sd(I,J) - QFX_sd(I,J)/(RHO*CQS2_sd(I,J))
                         endif
 
-                        if(CHS2(I,J).lt.1.E-3) then
+                        if(CHS2_sd(I,J).lt.1.E-3) then
                            T2(I,J) = TSK(I,J)
                         else
-                           T2(I,J) = TSK(I,J) - HFX(I,J)/(RHO*CP*CHS2(I,J))
+                           T2(I,J) = TSK(I,J) - HFX(I,J)/(RHO*CP*CHS2_sd(I,J))
                         endif
                     endif
                 endif
@@ -671,9 +671,9 @@ contains
         ! call domain_check(domain, "img: "//trim(str(this_image()))//" post-apply fluxes", fix=.True.)
     end subroutine apply_fluxes
 
-    subroutine allocate_noah_data(num_soil_layers)
+    subroutine allocate_noah_data(n_soil_layers)
         implicit none
-        integer, intent(in) :: num_soil_layers
+        integer, intent(in) :: n_soil_layers
         integer :: i
 
         ITIMESTEP=1
@@ -736,7 +736,7 @@ contains
         SNOPCX = 0
         allocate(POTEVP(ims:ime,jms:jme))
         POTEVP = 0
-        allocate(SMCREL(ims:ime,num_soil_layers,jms:jme))
+        allocate(SMCREL(ims:ime,n_soil_layers,jms:jme))
         SMCREL = 0
         allocate(RIB(ims:ime,jms:jme))
         RIB = 0
@@ -755,14 +755,14 @@ contains
         FRPCPN = .false. ! set this to true and calculate snow ratio to use microphysics based snow/rain partitioning
         ua_phys = .false.
 
-        allocate(SH2O(ims:ime,num_soil_layers,jms:jme))
+        allocate(SH2O(ims:ime,n_soil_layers,jms:jme))
         SH2O = 0.25
 
-        allocate(Zs(num_soil_layers))
-        allocate(DZs(num_soil_layers))
+        allocate(Zs(n_soil_layers))
+        allocate(DZs(n_soil_layers))
         DZs = [0.1,0.3,0.6,1.0]
         Zs(1) = DZs(1)/2
-        do i = 2,num_soil_layers
+        do i = 2,n_soil_layers
             Zs(i) = Zs(i-1) + DZs(i)/2 + DZs(i-1)/2
         end do
 
