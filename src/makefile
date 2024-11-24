@@ -85,6 +85,10 @@ ifeq ($(PE_ENV),CRAY)
 	ECHO_MOVE=/bin/mv
 endif
 
+ifdef NCAR_ROOT_FFTW
+	FFTW=${NCAR_ROOT_FFTW}
+	FFTW_DIR=${NCAR_ROOT_FFTW}
+endif
 ifndef FFTW
 	FFTW=${HOME}/usr/local
 endif
@@ -129,10 +133,13 @@ endif
 NODENAME := $(shell uname -n)
 
 ifndef COMPILER
-        find_gfortran=$(findstring gfortran, $(filter gfortran%,$(F90)))
-        ifeq (gfortran, $(find_gfortran))
-                COMPILER=gnu
-        endif
+	ifeq ($(F90),caf)
+		COMPILER=gnu
+	endif
+	find_gfortran=$(findstring gfortran, $(filter gfortran%,$(F90)))
+	ifeq (gfortran, $(find_gfortran))
+			COMPILER=gnu
+	endif
 	ifeq ($(F90),ifort)
 		COMPILER=intel
 	endif
